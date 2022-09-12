@@ -1,5 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
+import requests
+from requests.auth import HTTPBasicAuth
 import pyrebase
+import json
+import payment
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = "tempkey" #encrypts cookies and session data related to website
@@ -35,6 +39,50 @@ def register():
 @app.route("/maintainer", methods=["GET"])
 def maintainer():
     return render_template("maintainer.html")
+
+### PAYMENT REST API ###
+
+@app.route('/makeOrder', methods=['POST'])
+def makeOrder():
+    jsonData = {
+        "intent": "CAPTURE",
+        "purchase_units": [
+            {
+                "items": [
+                    {
+                        "name": "T-Shirt",
+                        "description": "Green XL",
+                        "quantity": "1",
+                        "unit_amount": {
+                            "currency_code": "USD",
+                            "value": "20"
+                        }
+                    }
+                ],
+                "amount": {
+                    "currency_code": "USD",
+                    "value": "20",
+                    "breakdown": {
+                        "item_total": {
+                            "currency_code": "USD",
+                            "value": "20"
+                        }
+                    }
+                }
+            }
+        ],
+        "application_context": {
+            "return_url": "https://example.com/return",
+            "cancel_url": "https://example.com/cancel"
+        }
+    }
+    headers = {"Authorization":"Bearer {}".format(payment.getToken())}
+    orderData = requests.post("https://api-m.sandbox.paypal.com/v2/checkout/orders", headers=headers, json=jsonData)
+    jsonResponse = json.loads(orderData.content)
+    paymentLink = jsonResponse["links"][1]["href"]
+    fileName = "barcode.png"
+    payment.makePaymentQR(paymentLink, fileName)
+    return redirect(url_for('home'))
 
 if __name__ == '__main__':
     app.run(debug=True)

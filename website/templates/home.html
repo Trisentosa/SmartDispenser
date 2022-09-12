@@ -2,4 +2,19 @@
 {% endblock %} {% block content %}
 <h1>Home Page</h1>
 <p>Home : customer make order and instructions</p>
+
+<form action="/makeOrder" method="post">
+  <div class="mb-3">
+    <label for="price" class="form-label">Test Price</label>
+    <input
+      type="number"
+      value="{{ request.form['title'] }}"
+      class="form-control"
+      id="price"
+      name="price"
+      aria-describedby="priceHelp"
+    />
+  </div>
+  <button type="submit" class="btn btn-primary">Make Order</button>
+</form>
 {% endblock %}
