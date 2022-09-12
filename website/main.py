@@ -76,10 +76,12 @@ def makeOrder():
             "cancel_url": "https://example.com/cancel"
         }
     }
-    headers = {"Authorization":"Bearer {}".format(payment.getToken())}
+    paypalToken = payment.getToken()
+    headers = {"Authorization":"Bearer {}".format(paypalToken)}
     orderData = requests.post("https://api-m.sandbox.paypal.com/v2/checkout/orders", headers=headers, json=jsonData)
     jsonResponse = json.loads(orderData.content)
     paymentLink = jsonResponse["links"][1]["href"]
+    print(paymentLink)
     fileName = "barcode.png"
     payment.makePaymentQR(paymentLink, fileName)
     return redirect(url_for('home'))

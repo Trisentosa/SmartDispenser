@@ -5,13 +5,17 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 paypalToken = ""
-expired = false # will be used to dynamically check for access token
+expired = False # will be used to dynamically check for access token
 
+# return access token
 def getToken():
-    if paypalToken == "" or expired:
+    global paypalToken
+    global expired
+    if(paypalToken == "" or expired):
         response = generateToken()
         jsonResponse = json.loads(response.content)
         paypalToken = jsonResponse["access_token"]
+        print(paypalToken)
 
     return paypalToken
 
