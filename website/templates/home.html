@@ -1,20 +1,62 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block head %}
 {% endblock %} {% block content %}
-<h1>Home Page</h1>
-<p>Home : customer make order and instructions</p>
 
+<span class="categoryText">Choose Drink</span>
+<span class="badge bg-success badgeText">Required</span>
+<!-- ORDER FORM -->
 <form action="/makeOrder" method="post">
-  <div class="mb-3">
-    <label for="price" class="form-label">Test Price</label>
-    <input
-      type="number"
-      value="{{ request.form['title'] }}"
-      class="form-control"
-      id="price"
-      name="price"
-      aria-describedby="priceHelp"
-    />
+  <!-- Radio Select Drink Option -->
+  <div class="text-center verticalButtonLayout">
+    <label class="btn btn-outline-dark optionButton">
+      <input type="radio" name="drink" value="milk" checked />
+      <div class="verticalButtonLayout">
+        <span class="optionLabel">Milk</span>
+        <div class="priceText">$3.00</div>
+      </div>
+    </label>
+    <label class="btn btn-outline-dark optionButton">
+      <input type="radio" name="drink" value="coffee" />
+      <div class="verticalButtonLayout">
+        <span class="optionLabel">Coffee</span>
+        <div class="priceText">$4.00</div>
+      </div>
+    </label>
+    <label class="btn btn-outline-dark optionButton">
+      <input type="radio" name="drink" value="chocolate" />
+      <div class="verticalButtonLayout">
+        <span class="optionLabel">Chocolate</span>
+        <div class="priceText">$4.50</div>
+      </div>
+    </label>
+    <label class="btn btn-outline-dark optionButton">
+      <input type="radio" name="drink" value="green tea" />
+      <div class="verticalButtonLayout">
+        <span class="optionLabel">Green Tea</span>
+        <div class="priceText">$3.50</div>
+      </div>
+    </label>
+    <label class="btn btn-outline-dark optionButton">
+      <input type="radio" name="drink" value="mango" />
+      <div class="verticalButtonLayout">
+        <span class="optionLabel">Mango</span>
+        <div class="priceText">$4.00</div>
+      </div>
+    </label>
+    <label class="btn btn-outline-dark optionButton">
+      <input type="radio" name="drink" value="passionfruit" />
+      <div class="verticalButtonLayout">
+        <span class="optionLabel">Passionfruit</span>
+        <div class="priceText">$4.00</div>
+      </div>
+    </label>
   </div>
-  <button type="submit" class="btn btn-primary">Make Order</button>
+
+  <!-- SUBMIT BUTTON -->
+  <div class="text-center">
+    <button type="submit" class="btn btn-success submitButton">
+      <span class="optionLabel">Make Order</span>
+    </button>
+  </div>
 </form>
+
 {% endblock %}

@@ -48,3 +48,48 @@ def makePaymentQR(paymentLink, fileName = "barcode.png"):
 
     img = qr.make_image(fill_color="black", back_color="white")
     img.save(fileName)
+
+# Make json object order based on paypal create order API
+def makePaypalJSON(productName, productDesc, productValue, currencyCode = "USD"):
+    jsonData = {
+        "intent": "CAPTURE",
+        "purchase_units": [
+            {
+                "items": [
+                    {
+                        "name": "{}".format(productName),
+                        "description": "{}".format(productDesc),
+                        "quantity": "1",
+                        "unit_amount": {
+                            "currency_code": "{}".format(currencyCode),
+                            "value": "{}".format(productValue)
+                        }
+                    }
+                ],
+                "amount": {
+                    "currency_code": "{}".format(currencyCode),
+                    "value": "{}".format(productValue),
+                    "breakdown": {
+                        "item_total": {
+                            "currency_code": "{}".format(currencyCode),
+                            "value": "{}".format(productValue)
+                        }
+                    }
+                }
+            }
+        ],
+        "application_context": {
+            "return_url": "https://example.com/return",
+            "cancel_url": "https://example.com/cancel"
+        }
+    }
+    return jsonData
+
+# Add more stuff later: size, bubble/extra bubble, etc
+def getTotalPrice(flavor):
+    price = 0
+    flavorPrice = {"milk":3.00, "coffee":4.00, "chocolate":4.50, "green tea":3.50, "mango":4.0, "passionfruit":4.0}
+    
+    if flavor in flavorPrice:
+        price += flavorPrice[flavor]
+    return price

@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, make_response
 import requests
+import os
 from requests.auth import HTTPBasicAuth
 import pyrebase
 import json
@@ -40,51 +41,45 @@ def register():
 def maintainer():
     return render_template("maintainer.html")
 
-### PAYMENT REST API ###
+### PAYMENT REST API ###  
+
+@app.route('/cancelOrder', methods=['POST'])
+def cancelOrder():
+    orderID = db.child("currentOrder").child("orderID").get()
+
+    #Cancel Order
+    paypalToken = payment.getToken() 
+    headers = {"Authorization":"Bearer {}".format(paypalToken)}
+    cancelRequest = requests.delete("https://api-m.sandbox.paypal.com/v1/checkout/orders/{}".format(orderID.val()), headers=headers)
+    print(cancelRequest.status_code)
+    return redirect(url_for("home") )
+
 
 @app.route('/makeOrder', methods=['POST'])
 def makeOrder():
-    jsonData = {
-        "intent": "CAPTURE",
-        "purchase_units": [
-            {
-                "items": [
-                    {
-                        "name": "T-Shirt",
-                        "description": "Green XL",
-                        "quantity": "1",
-                        "unit_amount": {
-                            "currency_code": "USD",
-                            "value": "20"
-                        }
-                    }
-                ],
-                "amount": {
-                    "currency_code": "USD",
-                    "value": "20",
-                    "breakdown": {
-                        "item_total": {
-                            "currency_code": "USD",
-                            "value": "20"
-                        }
-                    }
-                }
-            }
-        ],
-        "application_context": {
-            "return_url": "https://example.com/return",
-            "cancel_url": "https://example.com/cancel"
-        }
-    }
-    paypalToken = payment.getToken()
+    formData = request.form # Get form data
+
+    # Create order request to paypal backend
+    orderValue =  payment.getTotalPrice(formData["drink"])
+    jsonData = payment.makePaypalJSON("Team Kiwi Drink", "Order: {} flavor".format(formData["drink"]), orderValue)
+    paypalToken = payment.getToken() 
     headers = {"Authorization":"Bearer {}".format(paypalToken)}
     orderData = requests.post("https://api-m.sandbox.paypal.com/v2/checkout/orders", headers=headers, json=jsonData)
     jsonResponse = json.loads(orderData.content)
+    orderID = jsonResponse["id"]
     paymentLink = jsonResponse["links"][1]["href"]
-    print(paymentLink)
-    fileName = "barcode.png"
-    payment.makePaymentQR(paymentLink, fileName)
-    return redirect(url_for('home'))
+
+    #Embed Payment link in qr code
+    fileName = "static/images/barcode.png"
+    payment.makePaymentQR(paymentLink, fileName) 
+
+    #store order info (order id, drink type, price)
+    db.child("currentOrder").child("orderID").set(orderID)
+    db.child("currentOrder").child("drink").set(formData["drink"])
+    db.child("currentOrder").child("price").set(orderValue)
+    db.child("currentOrder").child("orderLink").set(paymentLink)
+
+    return render_template("payOrder.html", drink=formData["drink"], value = orderValue, orderID=orderID)
 
 if __name__ == '__main__':
     app.run(debug=True)
