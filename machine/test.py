@@ -28,7 +28,7 @@ db = firebase.database()
 def get_pump1_status():
     status = db.child("pumps").child("pump1").get().val()
     return status
-    
+
 def get_pump2_status():
     status = db.child("pumps").child("pump2").get().val()
     return status
@@ -56,6 +56,12 @@ print(get_pump3_status())
 print(get_pump4_status())
 print(get_pump5_status())
 print(get_pump6_status())
+
+while True:
+    if(get_pump1_status):
+        GPIO.output(0,GPIO.LOW)
+    else:
+        GPIO.output(0,GPIO.HIGH)
 
 
 # def pump1_toggleON():

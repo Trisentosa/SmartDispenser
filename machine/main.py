@@ -103,34 +103,75 @@ db = firebase.database()
                                  
 #                         ) 
 
-# Main while loop
+
+################ NEW CODE    ##
+
+def get_pump1_status():
+    status = db.child("pumps").child("pump1").get().val()
+    return status
+
+def get_pump2_status():
+    status = db.child("pumps").child("pump2").get().val()
+    return status
+
+def get_pump3_status():
+    status = db.child("pumps").child("pump3").get().val()
+    return status
+
+def get_pump4_status():
+    status = db.child("pumps").child("pump4").get().val()
+    return status
+
+def get_pump5_status():
+    status = db.child("pumps").child("pump5").get().val()
+    return status
+
+def get_pump6_status():
+    status = db.child("pumps").child("pump6").get().val()
+    return status
+
+print(get_pump1_status())
+print(get_pump2_status())
+print(get_pump3_status())
+print(get_pump4_status())
+print(get_pump5_status())
+print(get_pump6_status())
+
 while True:
-    GPIO.output(0,GPIO.LOW)
-    time.sleep(2)
-    GPIO.output(0,GPIO.HIGH)
-    time.sleep(2)
+    if(get_pump1_status):
+        GPIO.output(0,GPIO.LOW)
+    else:
+        GPIO.output(0,GPIO.HIGH)
 
-#    GPIO.output(5,GPIO.LOW)
-#    time.sleep(2)
-#    GPIO.output(5,GPIO.HIGH)
-#    time.sleep(2)
 
-#    GPIO.output(6,GPIO.LOW)
-#    time.sleep(2)
-#    GPIO.output(6,GPIO.HIGH)
-#    time.sleep(2)
-    #pump2.on()
-    #time.sleep(2)
-    #pump2.off()
-    #time.sleep(2)
+# Main while loop
+# while True:
+#     GPIO.output(0,GPIO.LOW)
+#     time.sleep(2)
+#     GPIO.output(0,GPIO.HIGH)
+#     time.sleep(2)
 
-    #pump3.on()
-    #time.sleep(2)
-    #pump3.off()
-    #time.sleep(2)
+# #    GPIO.output(5,GPIO.LOW)
+# #    time.sleep(2)
+# #    GPIO.output(5,GPIO.HIGH)
+# #    time.sleep(2)
 
-GPIO.cleanup() # cleanup all GPIO
-lcd.clear()
+# #    GPIO.output(6,GPIO.LOW)
+# #    time.sleep(2)
+# #    GPIO.output(6,GPIO.HIGH)
+# #    time.sleep(2)
+#     #pump2.on()
+#     #time.sleep(2)
+#     #pump2.off()
+#     #time.sleep(2)
+
+#     #pump3.on()
+#     #time.sleep(2)
+#     #pump3.off()
+#     #time.sleep(2)
+
+# GPIO.cleanup() # cleanup all GPIO
+# lcd.clear()
 
 
 
