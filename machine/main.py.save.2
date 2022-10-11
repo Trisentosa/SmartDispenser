@@ -40,29 +40,20 @@ from twilio.rest import Client
 # led = LED(27)
 
 # pumps
-GPIO.setmode(GPIO.BCM)
-os.system('modprobe w1-gpio')
-GPIO.setup(0,GPIO.OUT)
-GPIO.setup(5,GPIO.OUT)
-GPIO.setup(6,GPIO.OUT)
-#pump1 = LED(0)
-#pump2 = LED(5)
-#pump3 = LED(6)
-#pump4 = LED(13)
-#pump5 = LED(19)
-#pump6 = LED(26)
-#pump1.off()
-#pump2.off()
-#pump3.off()
-#pump4.off()
-#pump5.off()
-#pump6.off()
+
+pump1 = LED(0)
+pump2 = LED(5)
+pump3 = LED(6)
+pump4 = LED(13)
+pump5 = LED(19)
+pump6 = LED(26)
+
 
 
 # '''                 Connecting to temp sensor and retrieving data                   '''
 
 # Start/Initialize the GPIO Pins
-#os.system('modprobe w1-gpio')  # Turns on the GPIO module
+os.system('modprobe w1-gpio')  # Turns on the GPIO module
 # os.system('modprobe w1-therm') # Turns on the Temperature module
 
 '''                   Firebase database initialization and sending temperature data                       '''
@@ -94,8 +85,7 @@ db = firebase.database()
 #         client.messages.create(  
 #                                 messaging_service_sid='MG1d68b0889c53c0e566a20d215b56b359',       
 #                                 to=str(toNumber),
-#                                 body= "High temperature reached: " + read_temp_c() + "°" + "C" + " / " + read_temp_f() + "°" + "F" )
-#     elif lowTemp():
+#                                 body= "High temperature reached: " + read_temp_c() + "°" + "C" + " / " + read_temp_f() + "°" + "F"#     elif lowTemp():
 #         client.messages.create(  
 #                                 messaging_service_sid='MG1d68b0889c53c0e566a20d215b56b359',       
 #                                 to=str(toNumber),
@@ -105,29 +95,23 @@ db = firebase.database()
 
 # Main while loop
 while True:
-    GPIO.output(0,GPIO.LOW)
+    pump1.off()
+    pump2.off()
+    pump3.off()
+
+    pump1.on()
+
+
     time.sleep(2)
-    GPIO.output(0,GPIO.HIGH)
+    pump1.off()
     time.sleep(2)
+   # pump2.on() 
+   # time.sleep(3)
+   # pump2.of()
+   # pump3.on()
+   # time.sleep(3)
+   # pump3.off()       
 
-#    GPIO.output(5,GPIO.LOW)
-#    time.sleep(2)
-#    GPIO.output(5,GPIO.HIGH)
-#    time.sleep(2)
-
-#    GPIO.output(6,GPIO.LOW)
-#    time.sleep(2)
-#    GPIO.output(6,GPIO.HIGH)
-#    time.sleep(2)
-    #pump2.on()
-    #time.sleep(2)
-    #pump2.off()
-    #time.sleep(2)
-
-    #pump3.on()
-    #time.sleep(2)
-    #pump3.off()
-    #time.sleep(2)
 
 GPIO.cleanup() # cleanup all GPIO
 lcd.clear()
