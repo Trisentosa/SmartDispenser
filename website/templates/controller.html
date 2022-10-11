@@ -1,0 +1,18 @@
+{% extends "base.html" %} {% block title %}Maintainer{% endblock %} {% block
+head %} {% endblock %} {% block content %}
+<h1>Controller Page</h1>
+<p>Controller : Controls pump</p>
+
+<button class="btn btn-info" id="pump1">Pump 1 : {{statusArray[0]}}</button>
+<button class="btn btn-info" id="pump2">Pump 2 : {{statusArray[1]}}</button>
+<button class="btn btn-info" id="pump3">Pump 3 : {{statusArray[2]}}</button>
+<button class="btn btn-info" id="pump4">Pump 4 : {{statusArray[3]}}</button>
+<button class="btn btn-info" id="pump5">Pump 5 : {{statusArray[4]}}</button>
+<button class="btn btn-info" id="pump6">Pump 6 : {{statusArray[5]}}</button>
+
+<script
+  type="text/javascript"
+  src="{{ url_for('static', filename='js/pumpController.js') }}"
+></script>
+
+{% endblock %}

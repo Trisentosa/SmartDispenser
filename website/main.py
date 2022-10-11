@@ -41,6 +41,32 @@ def register():
 def maintainer():
     return render_template("maintainer.html")
 
+@app.route("/controller", methods=["GET"])
+def controller():
+    statusArray = []
+    for i in range(1,7):
+        status = db.child("pumps").child("pump{}".format(i)).get().val()
+        if status == True:
+            statusArray.append("ON")
+        else:
+            statusArray.append("OFF")
+    return render_template("controller.html", statusArray=statusArray)
+
+### COntrol Pump ###
+
+@app.route("/pump/<pumpNumber>", methods=["POST"])
+def push(pumpNumber):
+    pumpStatus = db.child("pumps").child("pump{}".format(pumpNumber)).get().val()
+    if pumpStatus == True:
+        pumpStatus = False
+    else:
+        pumpStatus = True
+    db.child("pumps").child("pump{}".format(pumpNumber)).set(pumpStatus)
+    data = {"pump":pumpStatus}
+    response = make_response(data)
+    response.content_type = 'application/json'
+    return response
+
 ### PAYMENT REST API ###  
 
 @app.route('/cancelOrder', methods=['POST'])
@@ -79,7 +105,7 @@ def makeOrder():
     db.child("currentOrder").child("price").set(orderValue)
     db.child("currentOrder").child("orderLink").set(paymentLink)
 
-    return render_template("payOrder.html", drink=formData["drink"], value = orderValue, orderID=orderID)
+    return render_template("payOrder.html", drink=formData["drink"], value = orderValue, orderID=orderID, paypalToken=paypalToken)
 
 if __name__ == '__main__':
     app.run(debug=True)
