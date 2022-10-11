@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response
+from flask import Flask, render_template, request, redirect, url_for, make_response, Response
 import requests
 import os
 from requests.auth import HTTPBasicAuth
@@ -41,7 +41,7 @@ def register():
 def maintainer():
     return render_template("maintainer.html")
 
-@app.route("/controller", methods=["GET"])
+@app.route("/controller", methods=["GET","POST"])
 def controller():
     statusArray = []
     for i in range(1,7):
@@ -50,7 +50,23 @@ def controller():
             statusArray.append("ON")
         else:
             statusArray.append("OFF")
-    return render_template("controller.html", statusArray=statusArray)
+
+    if request.method == 'GET':
+        return render_template("controller.html", statusArray=statusArray)
+    else:
+        paypalToken = payment.getToken() 
+        orderID = db.child("currentOrder").child("orderID").get().val()
+        headers = {"Authorization":"Bearer {}".format(paypalToken), "Content-Type": "application/json"}
+        detectPayment = requests.post("https://api-m.sandbox.paypal.com/v2/checkout/orders/{}/capture".format(orderID), headers=headers)
+        if(detectPayment.status_code == 422):
+            stat = Response(status=204)
+            return stat 
+        else:
+            #201 status code
+            price = db.child("currentOrder").child("price").get().val()
+            currentProfit = db.child("maintainer").child("totalProfit").get().val()
+            newProfit = db.child("maintainer").child("totalProfit").set(currentProfit+price)
+            return render_template("maintainer.html", profit = newProfit)
 
 ### COntrol Pump ###
 
