@@ -24,10 +24,11 @@ config = {
 firebase = pyrebase.initialize_app(config)
 db = firebase.database()
 
-# Routes
+### BASIC ROUTES ###
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("home.html")
+    drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
+    return render_template("home.html", drinkSetting=drinkSetting)
 
 @app.route("/login", methods=["GET"])
 def login():
@@ -39,7 +40,9 @@ def register():
 
 @app.route("/maintainer", methods=["GET"])
 def maintainer():
-    return render_template("maintainer.html")
+    totalProfit = db.child("maintainer").child("totalProfit").get().val()
+    drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
+    return render_template("maintainer.html", profit=totalProfit, drinkSetting=drinkSetting)
 
 @app.route("/controller", methods=["GET","POST"])
 def controller():
@@ -52,6 +55,7 @@ def controller():
             statusArray.append("OFF")
 
     if request.method == 'GET':
+        #Get request is temporary only
         return render_template("controller.html", statusArray=statusArray)
     else:
         paypalToken = payment.getToken() 
@@ -66,9 +70,9 @@ def controller():
             price = db.child("currentOrder").child("price").get().val()
             currentProfit = db.child("maintainer").child("totalProfit").get().val()
             newProfit = db.child("maintainer").child("totalProfit").set(currentProfit+price)
-            return render_template("maintainer.html", profit = newProfit)
+            return render_template("controller.html", statusArray=statusArray)
 
-### COntrol Pump ###
+### Control Pump ###
 
 @app.route("/pump/<pumpNumber>", methods=["POST"])
 def push(pumpNumber):
@@ -85,25 +89,16 @@ def push(pumpNumber):
 
 ### PAYMENT REST API ###  
 
-@app.route('/cancelOrder', methods=['POST'])
-def cancelOrder():
-    orderID = db.child("currentOrder").child("orderID").get()
-
-    #Cancel Order
-    paypalToken = payment.getToken() 
-    headers = {"Authorization":"Bearer {}".format(paypalToken)}
-    cancelRequest = requests.delete("https://api-m.sandbox.paypal.com/v1/checkout/orders/{}".format(orderID.val()), headers=headers)
-    print(cancelRequest.status_code)
-    return redirect(url_for("home") )
-
-
 @app.route('/makeOrder', methods=['POST'])
 def makeOrder():
+    # Get form data
     formData = request.form # Get form data
+    drinkNumber = formData["drink"]
+    drinkName = db.child("maintainer").child("drinkSetting").child("drink{}".format(drinkNumber)).child("name").get().val()
+    drinkPrice = db.child("maintainer").child("drinkSetting").child("drink{}".format(drinkNumber)).child("price").get().val()
 
     # Create order request to paypal backend
-    orderValue =  payment.getTotalPrice(formData["drink"])
-    jsonData = payment.makePaypalJSON("Team Kiwi Drink", "Order: {} flavor".format(formData["drink"]), orderValue)
+    jsonData = payment.makePaypalJSON("Team Kiwi Drink", "Order: {} flavor".format(drinkName), drinkPrice)
     paypalToken = payment.getToken() 
     headers = {"Authorization":"Bearer {}".format(paypalToken)}
     orderData = requests.post("https://api-m.sandbox.paypal.com/v2/checkout/orders", headers=headers, json=jsonData)
@@ -117,11 +112,34 @@ def makeOrder():
 
     #store order info (order id, drink type, price)
     db.child("currentOrder").child("orderID").set(orderID)
-    db.child("currentOrder").child("drink").set(formData["drink"])
-    db.child("currentOrder").child("price").set(orderValue)
+    db.child("currentOrder").child("drink").set(drinkName)
+    db.child("currentOrder").child("price").set(drinkPrice)
     db.child("currentOrder").child("orderLink").set(paymentLink)
 
-    return render_template("payOrder.html", drink=formData["drink"], value = orderValue, orderID=orderID, paypalToken=paypalToken)
+    return render_template("payOrder.html", drink=drinkName, value = drinkPrice, orderID=orderID, paypalToken=paypalToken)
+
+@app.route('/cancelOrder', methods=['POST'])
+def cancelOrder():
+    orderID = db.child("currentOrder").child("orderID").get()
+
+    #Cancel Order
+    paypalToken = payment.getToken() 
+    headers = {"Authorization":"Bearer {}".format(paypalToken)}
+    cancelRequest = requests.delete("https://api-m.sandbox.paypal.com/v1/checkout/orders/{}".format(orderID.val()), headers=headers)
+    print(cancelRequest.status_code)
+    return redirect(url_for("home") )
+
+### MAINTAINER ROUTE ### 
+@app.route('/setDrink', methods=['POST'])
+def setDrink():
+    formData = request.form # Get form data
+    print(formData)
+    for i in range(1,7):
+        drinkName = formData["drink{}".format(i)]
+        drinkPrice = 0 if float(formData["price{}".format(i)]) < 0 else float(formData["price{}".format(i)])
+        db.child("maintainer").child("drinkSetting").child("drink{}".format(i)).child("name").set(drinkName)
+        db.child("maintainer").child("drinkSetting").child("drink{}".format(i)).child("price").set(drinkPrice)
+    return redirect(url_for("home") )
 
 if __name__ == '__main__':
     app.run(debug=True)

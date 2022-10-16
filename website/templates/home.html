@@ -7,48 +7,19 @@
 <form action="/makeOrder" method="post">
   <!-- Radio Select Drink Option -->
   <div class="text-center verticalButtonLayout">
+    {% for i in range(1,7) %}
     <label class="btn btn-outline-dark optionButton">
-      <input type="radio" name="drink" value="milk" checked />
+      <input type="radio" name="drink" value="{{i}}" />
       <div class="verticalButtonLayout">
-        <span class="optionLabel">Milk</span>
-        <div class="priceText">$3.00</div>
+        <span class="optionLabel"
+          >{{drinkSetting["drink{}".format(i)]["name"]}}</span
+        >
+        <div class="priceText">
+          ${{drinkSetting["drink{}".format(i)]["price"]}}
+        </div>
       </div>
     </label>
-    <label class="btn btn-outline-dark optionButton">
-      <input type="radio" name="drink" value="coffee" />
-      <div class="verticalButtonLayout">
-        <span class="optionLabel">Coffee</span>
-        <div class="priceText">$4.00</div>
-      </div>
-    </label>
-    <label class="btn btn-outline-dark optionButton">
-      <input type="radio" name="drink" value="chocolate" />
-      <div class="verticalButtonLayout">
-        <span class="optionLabel">Chocolate</span>
-        <div class="priceText">$4.50</div>
-      </div>
-    </label>
-    <label class="btn btn-outline-dark optionButton">
-      <input type="radio" name="drink" value="green tea" />
-      <div class="verticalButtonLayout">
-        <span class="optionLabel">Green Tea</span>
-        <div class="priceText">$3.50</div>
-      </div>
-    </label>
-    <label class="btn btn-outline-dark optionButton">
-      <input type="radio" name="drink" value="mango" />
-      <div class="verticalButtonLayout">
-        <span class="optionLabel">Mango</span>
-        <div class="priceText">$4.00</div>
-      </div>
-    </label>
-    <label class="btn btn-outline-dark optionButton">
-      <input type="radio" name="drink" value="passionfruit" />
-      <div class="verticalButtonLayout">
-        <span class="optionLabel">Passionfruit</span>
-        <div class="priceText">$4.00</div>
-      </div>
-    </label>
+    {% endfor %}
   </div>
 
   <!-- SUBMIT BUTTON -->
