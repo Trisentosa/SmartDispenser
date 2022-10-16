@@ -53,24 +53,8 @@ def controller():
             statusArray.append("ON")
         else:
             statusArray.append("OFF")
+    return render_template("controller.html", statusArray=statusArray)
 
-    if request.method == 'GET':
-        #Get request is temporary only
-        return render_template("controller.html", statusArray=statusArray)
-    else:
-        paypalToken = payment.getToken() 
-        orderID = db.child("currentOrder").child("orderID").get().val()
-        headers = {"Authorization":"Bearer {}".format(paypalToken), "Content-Type": "application/json"}
-        detectPayment = requests.post("https://api-m.sandbox.paypal.com/v2/checkout/orders/{}/capture".format(orderID), headers=headers)
-        if(detectPayment.status_code == 422):
-            stat = Response(status=204)
-            return stat 
-        else:
-            #201 status code
-            price = db.child("currentOrder").child("price").get().val()
-            currentProfit = db.child("maintainer").child("totalProfit").get().val()
-            newProfit = db.child("maintainer").child("totalProfit").set(currentProfit+price)
-            return render_template("controller.html", statusArray=statusArray)
 
 ### Control Pump ###
 
@@ -126,14 +110,33 @@ def cancelOrder():
     paypalToken = payment.getToken() 
     headers = {"Authorization":"Bearer {}".format(paypalToken)}
     cancelRequest = requests.delete("https://api-m.sandbox.paypal.com/v1/checkout/orders/{}".format(orderID.val()), headers=headers)
-    print(cancelRequest.status_code)
     return redirect(url_for("home") )
 
+@app.route('/detectPayment', methods=['POST'])
+def detectPayment():
+    paypalToken = payment.getToken() 
+    orderID = db.child("currentOrder").child("orderID").get().val()
+    headers = {"Authorization":"Bearer {}".format(paypalToken), "Content-Type": "application/json"}
+    detectPayment = requests.post("https://api-m.sandbox.paypal.com/v2/checkout/orders/{}/capture".format(orderID), headers=headers)
+    print(detectPayment.status_code)
+    if(detectPayment.status_code == 201):
+        print("redirect")
+        price = db.child("currentOrder").child("price").get().val()
+        currentProfit = db.child("maintainer").child("totalProfit").get().val()
+        newProfit = db.child("maintainer").child("totalProfit").set(currentProfit+price)
+        return redirect(url_for("controller") )
+    else:
+        print("stay")
+        #201 status code
+        stat = Response(status=204)
+        return stat 
+
+
 ### MAINTAINER ROUTE ### 
+
 @app.route('/setDrink', methods=['POST'])
 def setDrink():
     formData = request.form # Get form data
-    print(formData)
     for i in range(1,7):
         drinkName = formData["drink{}".format(i)]
         drinkPrice = 0 if float(formData["price{}".format(i)]) < 0 else float(formData["price{}".format(i)])
