@@ -27,6 +27,7 @@ db = firebase.database()
 ### BASIC ROUTES ###
 @app.route("/", methods=["GET"])
 def home():
+    db.child("status").child("orderSignal").set(False)
     drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
     return render_template("home.html", drinkSetting=drinkSetting)
 
@@ -99,6 +100,7 @@ def makeOrder():
     db.child("currentOrder").child("drink").set(drinkName)
     db.child("currentOrder").child("price").set(drinkPrice)
     db.child("currentOrder").child("orderLink").set(paymentLink)
+    db.child("currentOrder").child("pumpId").set(drinkNumber)
 
     return render_template("payOrder.html", drink=drinkName, value = drinkPrice, orderID=orderID, paypalToken=paypalToken)
 
@@ -120,20 +122,18 @@ def detectPayment():
     detectPayment = requests.post("https://api-m.sandbox.paypal.com/v2/checkout/orders/{}/capture".format(orderID), headers=headers)
     print(detectPayment.status_code)
     if(detectPayment.status_code == 201):
-        print("redirect")
         price = db.child("currentOrder").child("price").get().val()
         currentProfit = db.child("maintainer").child("totalProfit").get().val()
         newProfit = db.child("maintainer").child("totalProfit").set(currentProfit+price)
+        #set orderSignal
+        db.child("status").child("orderSignal").set(True)
         return redirect(url_for("controller") )
     else:
-        print("stay")
         #201 status code
         stat = Response(status=204)
         return stat 
 
-
 ### MAINTAINER ROUTE ### 
-
 @app.route('/setDrink', methods=['POST'])
 def setDrink():
     formData = request.form # Get form data

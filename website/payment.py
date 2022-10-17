@@ -84,12 +84,3 @@ def makePaypalJSON(productName, productDesc, productValue, currencyCode = "USD")
         }
     }
     return jsonData
-
-# Add more stuff later: size, bubble/extra bubble, etc
-def getTotalPrice(flavor):
-    price = 0
-    flavorPrice = {"milk":3.00, "coffee":4.00, "chocolate":4.50, "green tea":3.50, "mango":4.0, "passionfruit":4.0}
-    
-    if flavor in flavorPrice:
-        price += flavorPrice[flavor]
-    return price
