@@ -138,10 +138,11 @@ print(get_pump5_status())
 print(get_pump6_status())
 
 while True:
-    if(get_pump1_status):
+    if(get_pump1_status() == True):
         GPIO.output(0,GPIO.LOW)
     else:
         GPIO.output(0,GPIO.HIGH)
+    time.sleep(0.5)
 
 
 # Main while loop
