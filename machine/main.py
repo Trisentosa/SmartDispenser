@@ -68,6 +68,7 @@ db = firebase.database()
 #to-do
 # - clean pipe function
 
+#time to fill the cup in seconds
 timeToFillCup = 8
 
 def get_pump_status(x):
