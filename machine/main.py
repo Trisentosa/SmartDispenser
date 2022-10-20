@@ -18,52 +18,33 @@ import pyrebase
 from twilio.rest import Client
 
 
-
-'''  Configuring LCD  '''
-
-# lcd = CharLCD(cols=16, rows=2, pin_rs=37, pin_e=36, pins_data=[33, 31, 29, 23], numbering_mode=GPIO.BOARD)
-
 '''  Button/Switch states  '''
 # Using buttons with raspberry pi:  https://gpiozero.readthedocs.io/en/v1.1.0/api_input.html
 #                                   https://roboticadiy.com/connect-push-button-with-raspberry-pi-4/
 #                                   https://www.rototron.info/using-an-lcd-display-with-inputs-interrupts-on-raspberry-pi/
 
-# # Connect button to GPIO2  
-# button = Button(2)
-# #buttonState = False
-
-# # Connect switch to GPIO17
-# switch = Button(17)
-# # switchState = False
-
-# # lED connected to GPIO27
-# led = LED(27)
-
 # pumps
 GPIO.setmode(GPIO.BCM)
 os.system('modprobe w1-gpio')
-GPIO.setup(0,GPIO.OUT)
-GPIO.setup(5,GPIO.OUT)
+
+pumps = {1:0, 2:5, 3:6, 4:13, 5:19, 6:26}
+# Pumps
+GPIO.setup(0,GPIO.OUT)  
+GPIO.setup(5,GPIO.OUT)  
 GPIO.setup(6,GPIO.OUT)
-#pump1 = LED(0)
-#pump2 = LED(5)
-#pump3 = LED(6)
-#pump4 = LED(13)
-#pump5 = LED(19)
-#pump6 = LED(26)
-#pump1.off()
-#pump2.off()
-#pump3.off()
-#pump4.off()
-#pump5.off()
-#pump6.off()
+GPIO.setup(13,GPIO.OUT)
+GPIO.setup(19,GPIO.OUT)
+GPIO.setup(26,GPIO.OUT)
+
+motors = {1:17, 2:27}
+# # Stepper motor (Boba (mill) dispenser)
+GPIO.setup(17,GPIO.OUT)
+GPIO.setup(27,GPIO.OUT)
+
+# # IR/Proximity sensor
+GPIO.setup(22,GPIO.OUT)
 
 
-# '''                 Connecting to temp sensor and retrieving data                   '''
-
-# Start/Initialize the GPIO Pins
-#os.system('modprobe w1-gpio')  # Turns on the GPIO module
-# os.system('modprobe w1-therm') # Turns on the Temperature module
 
 '''                   Firebase database initialization and sending temperature data                       '''
 
@@ -82,136 +63,58 @@ config = {
 firebase = pyrebase.initialize_app(config)
 db = firebase.database()
 
+################ NEW CODE ##################
 
-# def sendSms(toNumber):
-#     '''Takes phone number as arg to the function and sends extreme temperatures sms notification to that phone number'''
+#to-do
+# - clean pipe function
 
-#     account_sid = 'ACc948439e80f605cc32693f38bc027052' 
-#     auth_token = '7273f38197d03626837d4e818f2dd8ab'
-#     client = Client(account_sid, auth_token) 
-    
-#     if highTemp():
-#         client.messages.create(  
-#                                 messaging_service_sid='MG1d68b0889c53c0e566a20d215b56b359',       
-#                                 to=str(toNumber),
-#                                 body= "High temperature reached: " + read_temp_c() + "°" + "C" + " / " + read_temp_f() + "°" + "F" )
-#     elif lowTemp():
-#         client.messages.create(  
-#                                 messaging_service_sid='MG1d68b0889c53c0e566a20d215b56b359',       
-#                                 to=str(toNumber),
-#                                 body= "Low temperature reached: " + read_temp_c() + "°" + "C" + " / " + read_temp_f() + "°" + "F"             
-                                 
-#                         ) 
+timeToFillCup = 8
 
-
-################ NEW CODE    ##
-
-def get_pump1_status():
-    status = db.child("pumps").child("pump1").get().val()
+def get_pump_status(x):
+    status = db.child("pumps").child("pump" + str(x)).get().val()
+    # time.sleep(0.5)
     return status
 
-def get_pump2_status():
-    status = db.child("pumps").child("pump2").get().val()
-    return status
+def togglePump(x):
+    GPIO.output(pumps[x],GPIO.LOW)
+    time.sleep(timeToFillCup)
 
-def get_pump3_status():
-    status = db.child("pumps").child("pump3").get().val()
-    return status
+    GPIO.output(pumps[x],GPIO.HIGH)
 
-def get_pump4_status():
-    status = db.child("pumps").child("pump4").get().val()
-    return status
 
-def get_pump5_status():
-    status = db.child("pumps").child("pump5").get().val()
-    return status
-
-def get_pump6_status():
-    status = db.child("pumps").child("pump6").get().val()
-    return status
-
-print(get_pump1_status())
-print(get_pump2_status())
-print(get_pump3_status())
-print(get_pump4_status())
-print(get_pump5_status())
-print(get_pump6_status())
+print(get_pump_status(1))
 
 while True:
-    if(get_pump1_status() == True):
-        GPIO.output(0,GPIO.LOW)
-    else:
-        GPIO.output(0,GPIO.HIGH)
+
+    pumpID = 0
+    motorID = 0
+
+    #Drink order signal
+    orderSignal = db.child("status").child("orderSignal").get().val()
+    
+    #Only retrieve pumpID if user makes a order
+    if(orderSignal == True):
+        pumpID = int(db.child("currentOrder").child("pumpId").get().val())
+        togglePump(pumpID)
+
+
+
+
+
     time.sleep(0.5)
 
 
-# Main while loop
-# while True:
-#     GPIO.output(0,GPIO.LOW)
-#     time.sleep(2)
-#     GPIO.output(0,GPIO.HIGH)
-#     time.sleep(2)
-
-# #    GPIO.output(5,GPIO.LOW)
-# #    time.sleep(2)
-# #    GPIO.output(5,GPIO.HIGH)
-# #    time.sleep(2)
-
-# #    GPIO.output(6,GPIO.LOW)
-# #    time.sleep(2)
-# #    GPIO.output(6,GPIO.HIGH)
-# #    time.sleep(2)
-#     #pump2.on()
-#     #time.sleep(2)
-#     #pump2.off()
-#     #time.sleep(2)
-
-#     #pump3.on()
-#     #time.sleep(2)
-#     #pump3.off()
-#     #time.sleep(2)
-
-# GPIO.cleanup() # cleanup all GPIO
-# lcd.clear()
 
 
 
 
 
 
-
-# if button.is_pressed or (db.child("Status").child("VirtualButton").get().val() == "True") :
-    #     lcd.cursor_pos = (0, 0)    
-    #     lcd.write_string("Temp: " + read_temp_c() + chr(223) + "C")
-    #     lcd.cursor_pos = (1, 0)
-    #     lcd.write_string("Temp: " + read_temp_f() + chr(223) + "F")
-
-    #     stateIO = {
-    #         "Button" : "True"
-    #         #"Switch" : switchState
-    #     }
-
+# Testing pumps
+    # if(get_pump_status() == True):
+    #     GPIO.output(0,GPIO.LOW)
     # else:
-    #     lcd.clear()
-        
-    #     lcd_display.backlight_enabled = False
-
-    #     stateIO = {
-    #         "Button" : "False"
-    #         #"Switch" : switchState
-    #     }
-
-    # db.child("States").set(stateIO)
+    #     GPIO.output(0,GPIO.HIGH)
+    # time.sleep(0.5)
 
 
-    # # firbase method send temp_C to firebase 
-    # temperatureData = {
-    #     "TempC": read_temp_c(),
-    #     "TempF": read_temp_f(), 
-    #     "Time" : time.time()
-    # }
-
-    # db.child("Temperatures").set(temperatureData)
-
-
-    # print(db.child("Temperatures").child("TempC").get().val() )
