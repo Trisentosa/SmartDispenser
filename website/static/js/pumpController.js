@@ -1,5 +1,3 @@
-console.log("pump controller is running");
-
 for (let index = 1; index < 7; index++) {
   $(`#pump${index}`).click(function () {
     $.post(`/pump/${index}`, function (data) {

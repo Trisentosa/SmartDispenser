@@ -22,8 +22,12 @@ head %} {% endblock %} {% block content %}
 </div>
 
 <div class="row my-5">
-  <h3>Your Data:</h3>
+  <h3>Order Data and History:</h3>
   <h5>Total profit is: ${{profit}}</h5>
+  <h5>Past Orders:</h5>
+  {% if orderHistory != "":%} {% for item in orderHistory.items():%}
+  <li>{{item[0]}}: {{item[1]}}</li>
+  {% endfor %} {%else%} <i>No drink history ...</i> {% endif %}
 </div>
 
 {% endblock %}

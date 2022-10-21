@@ -1,6 +1,5 @@
 /**
  * This file is responsible to detect if payment has been completed
- * REDACTED!!! Potentially unsafe, because handling payment detection in frontend
  */
 
 //url:/https://api-m.sandbox.paypal.com/v2/checkout/orders/:order_id/capture
@@ -24,6 +23,7 @@ async function checkPaymentStatus() {
   if (!response.ok) {
     console.error(`Request failed with status ${response.status}`);
   } else {
+    console.log(response);
     if (response["status"] == 200) {
       window.location.replace(response["url"]);
     }
