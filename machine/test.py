@@ -7,14 +7,12 @@ in2 = 18
 in3 = 27
 in4 = 22
  
-# careful lowering this, at some point you run into the mechanical limitation of how quick your motor can move
+# lower -> faster turn speed. lowest is around 0.002
 step_sleep = 0.003
  
-step_count = 4096 # 5.625*(1/64) per step, 4096 steps is 360°
+step_count = 4096 # 5.625*(1/64) per step, 4096 steps is 360°, 4096 = 1 rotation
  
-direction = False # True for clockwise, False for counter-clockwise
- 
-# defining stepper motor sequence (found in documentation http://www.4tronix.co.uk/arduino/Stepper-Motors.php)
+# defining stepper motor sequence
 step_sequence = [[1,0,0,1],
                  [1,0,0,0],
                  [1,1,0,0],
@@ -24,7 +22,7 @@ step_sequence = [[1,0,0,1],
                  [0,0,1,1],
                  [0,0,0,1]]
  
-# setting up
+# motor setting up
 GPIO.setmode( GPIO.BCM )
 GPIO.setup( in1, GPIO.OUT )
 GPIO.setup( in2, GPIO.OUT )
@@ -57,14 +55,7 @@ try:
     for i in range(step_count):
         for pin in range(0, len(motor_pins)):
             GPIO.output( motor_pins[pin], step_sequence[motor_step_counter][pin] )
-        if direction==True:
-            motor_step_counter = (motor_step_counter - 1) % 8
-        elif direction==False:
-            motor_step_counter = (motor_step_counter + 1) % 8
-        else: # defensive programming
-            print( "uh oh... direction should *always* be either True or False" )
-            cleanup()
-            exit( 1 )
+        motor_step_counter = (motor_step_counter - 1) % 8 # clockwise, cc +1 instead
         time.sleep( step_sleep )
     print("finish rotating")
  
