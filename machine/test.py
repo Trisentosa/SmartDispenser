@@ -8,7 +8,7 @@ in3 = 27
 in4 = 22
  
 # careful lowering this, at some point you run into the mechanical limitation of how quick your motor can move
-step_sleep = 0.002
+step_sleep = 0.003
  
 step_count = 4096 # 5.625*(1/64) per step, 4096 steps is 360°
  
@@ -52,6 +52,7 @@ def cleanup():
  
 # the meat
 try:
+    print("start rotating")
     i = 0
     for i in range(step_count):
         for pin in range(0, len(motor_pins)):
@@ -65,6 +66,7 @@ try:
             cleanup()
             exit( 1 )
         time.sleep( step_sleep )
+    print("finish rotating")
  
 except KeyboardInterrupt:
     cleanup()
