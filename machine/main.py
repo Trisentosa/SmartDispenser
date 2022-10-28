@@ -69,7 +69,7 @@ db = firebase.database()
 # - clean pipe function
 
 #time to fill the cup in seconds
-timeToFillCup = 8
+timeToFillCup = 15
 
 def get_pump_status(x):
     status = db.child("pumps").child("pump" + str(x)).get().val()
@@ -79,11 +79,8 @@ def get_pump_status(x):
 def togglePump(x):
     GPIO.output(pumps[x],GPIO.LOW)
     time.sleep(timeToFillCup)
-
     GPIO.output(pumps[x],GPIO.HIGH)
-
-
-print(get_pump_status(1))
+    db.child("status").child("orderSignal").set(False)
 
 while True:
 
@@ -92,17 +89,18 @@ while True:
 
     #Drink order signal
     orderSignal = db.child("status").child("orderSignal").get().val()
+    print("Order Signal")
+    print(orderSignal)
     
     #Only retrieve pumpID if user makes a order
     if(orderSignal == True):
+        print("toggle")
         pumpID = int(db.child("currentOrder").child("pumpId").get().val())
         togglePump(pumpID)
 
-
-
-
-
     time.sleep(0.5)
+
+GPIO.cleanup()
 
 
 
