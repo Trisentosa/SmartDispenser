@@ -145,6 +145,7 @@ def makeOrder():
     if len(formData) > 0:
         drinkNumber = formData["drink"]
         newOrder(drinkNumber)
+        db.child("status").child("state").set(1)
         return redirect(url_for("payOrder"))
     else:
         return redirect(url_for("home"))    
