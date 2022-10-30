@@ -1,10 +1,7 @@
-# trisentosa, meesam, som
-# SeniorDesign Project : Smart Dispenser
-
-'''    THIS FILE IS TO BE RUN ON THE RASPBERRY PI
-- create a new python file in the root directory of the raspi using "nano test.py"
-- copy all the code below and paste it in test.py, now save it
-- run the python file from root directory using "python test.py"
+'''    SMART DISPENSER - Team Kiwi
+- Team Members: Meesam, Som, Tri
+- This file is responsible for controlling the main logic of the machine, as well as 
+- controlling the pumps, stepper motor, proximity sensor, and voice control input
 '''
 
 import os
@@ -16,20 +13,32 @@ from RPLCD import CharLCD
 from gpiozero import Button, LED    # https://gpiozero.readthedocs.io/en/stable/index.html
 import pyrebase
 from twilio.rest import Client
+import speech_recognition as sr
+import pyttsx3
 
 
-'''  Button/Switch states  '''
-# Using buttons with raspberry pi:  https://gpiozero.readthedocs.io/en/v1.1.0/api_input.html
-#                                   https://roboticadiy.com/connect-push-button-with-raspberry-pi-4/
-#                                   https://www.rototron.info/using-an-lcd-display-with-inputs-interrupts-on-raspberry-pi/
+'''                   Voice Control Setup                       '''
+recognizer = sr.Recognizer()
 
-# pumps
+# return a dict where key:drinkNumber -> value: drinkName
+def getWords():
+    words = {}
+    drinkSettings = db.child("maintainer").child("drinkSetting").get().val()
+    for key,value in drinkSettings.items():
+        drinkName = value["name"].lower().replace(" ", "")
+        drinkNumber = key[-1] # key : drink<x> where x is drink number
+        words[drinkNumber] = drinkName
+    return words
+
+'''                   GPIO and components setup                        '''
+
+# GPIO setup
 GPIO.setmode(GPIO.BCM)
 os.system('modprobe w1-gpio')
 
+# Pumps
 pumps = {1:0, 2:5, 3:6, 4:13, 5:19, 6:26}
 
-# Pumps
 GPIO.setup(0,GPIO.OUT)  
 GPIO.setup(5,GPIO.OUT)  
 GPIO.setup(6,GPIO.OUT)
@@ -81,14 +90,10 @@ def cleanup():
     GPIO.output( in4, GPIO.LOW )
     GPIO.cleanup()
 
-
-
 # # IR/Proximity sensor
 #GPIO.setup(22,GPIO.OUT)
 
-
-
-'''                   Firebase database initialization and sending temperature data                       '''
+'''                   Firebase database initialization                        '''
 
 # FIREBASE CONFIG AND INITIALIZATION
 config = {
@@ -105,7 +110,7 @@ config = {
 firebase = pyrebase.initialize_app(config)
 db = firebase.database()
 
-################ NEW CODE ##################
+'''                   Functions for Making Order                        '''
 
 #to-do
 # - clean pipe function
@@ -132,30 +137,63 @@ def rotateMotor():
         motor_step_counter = (motor_step_counter - 1) % 8 # clockwise, cc +1 instead
         time.sleep( step_sleep )
 
+'''                   MAIN LOOP                       '''
 while True:
 
     pumpID = 0
     motorID = 0
+    state = db.child("status").child("state").get().val()
 
-    #Drink order signal
-    orderSignal = db.child("status").child("orderSignal").get().val()
-    print("Order Signal")
-    print(orderSignal)
-    
-    #Only retrieve pumpID if user makes a order
-    if(orderSignal == True):
-        print("Making the order ...")
-        rotateMotor()        
-        pumpID = int(db.child("currentOrder").child("pumpId").get().val())
-        togglePump(pumpID)
+    # LISTENING FOR VOICE STATE (0)
+    if state == 0:
+        try:
+            with sr.Microphone() as mic:
+                #Listen for text
+                print("listening")
+                audio = recognizer.adjust_for_ambient_noise(mic, duration=0.2)
+                audio = recognizer.listen(mic)
 
-    time.sleep(0.5)
+                text = recognizer.recognize_google(audio)
+                print("original text: ",text)
+                text = text.lower().replace(" ", "")
+                print("parsed text: ",text)
+
+                #Parse text and find in words list
+                found = False
+                i = 1 # drink number, starts at 1
+                words = getWords()
+                for drinkNumber, drinkName in words.items():
+                    if drinkName in text and not found:
+                        db.child("status").child("state").set(1)
+                        found = True
+                        print("found :",drinkName)
+                        # set voice signal in firebase and drinkNumber
+                        # Once read by the website, from website set the signal false
+                        db.child("voiceSignal").child("isSet").set(True)   
+                        db.child("voiceSignal").child("drinkNumber").set(drinkNumber)          
+
+        #reinitialize if error
+        except sr.UnknownValueError:
+            recognizer = sr.Recognizer()
+            continue
+
+    # WAITING FOR ORDER STATE (1)
+    else:
+        print("In state 1, waiting for order signal...")
+
+        #Drink order signal
+        orderSignal = db.child("status").child("orderSignal").get().val()
+        print("Order Signal")
+        print(orderSignal)
+        
+        #Only retrieve pumpID if user makes a order
+        if(orderSignal == True):
+            print("Making the order ...")
+            rotateMotor()        
+            pumpID = int(db.child("currentOrder").child("pumpId").get().val())
+            togglePump(pumpID)
+            db.child("status").child("state").set(0)
+
+        time.sleep(0.5)
 
 cleanup()
-
-# Testing pumps
-    # if(get_pump_status() == True):
-    #     GPIO.output(0,GPIO.LOW)
-    # else:
-    #     GPIO.output(0,GPIO.HIGH)
-    # time.sleep(0.5)
