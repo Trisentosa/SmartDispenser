@@ -125,9 +125,9 @@ def newOrder(drinkNumber):
     db.child("currentOrder").child("pumpId").set(drinkNumber)
 
 def getCurrentOrder():
-    drinkName = db.child("currentOrder").child("drink").child("drinkName").get().val()
-    drinkPrice = db.child("currentOrder").child("drink").child("drinkPrice").get().val()
-    orderID = db.child("currentOrder").child("drink").child("orderID").get().val()
+    drinkName = db.child("currentOrder").child("drink").get().val()
+    drinkPrice = db.child("currentOrder").child("price").get().val()
+    orderID = db.child("currentOrder").child("orderID").get().val()
     return [drinkName,drinkPrice,orderID]
 
 # PAY ORDER: open payment page, display barcode and cancel button
@@ -142,11 +142,12 @@ def payOrder():
 def makeOrder():
     # Get form data
     formData = request.form # Get form data
-    drinkNumber = formData["drink"]
-    newOrder(drinkNumber)
-    orderInfo = getCurrentOrder()
-
-    return redirect(url_for("payOrder"))
+    if len(formData) > 0:
+        drinkNumber = formData["drink"]
+        newOrder(drinkNumber)
+        return redirect(url_for("payOrder"))
+    else:
+        return redirect(url_for("home"))    
 
 # CANCEL ORDER: USE PAYPAL "CANCEL" ORDER REQUEST (CANCEL BUTTON IN PAYORDER.HTML)
 @app.route('/cancelOrder', methods=['POST'])
@@ -184,7 +185,22 @@ def detectPayment():
         stat = Response(status=204)
         return stat 
 
+### VOICE CONTROL ###
+@app.route('/detectVoice', methods=['POST'])
+def detectVoice():
+    voiceSignal = db.child("voiceSignal").child("isSet").get().val()
+    # check if voiceSignal is set
+    if voiceSignal:
+        drinkNumber = db.child("voiceSignal").child("drinkNumber").get().val()
+        db.child("voiceSignal").child("isSet").set(False)
+        newOrder(drinkNumber)
+        return redirect(url_for("payOrder"))
+    else:
+        stat = Response(status=204)
+        return stat
+
 ### MAINTAINER ROUTE ### 
+
 # SET DRINK: SET THE DRINK SETTING (PRICE AND NAME) IN MAINTAINER PAGE
 @app.route('/setDrink', methods=['POST'])
 def setDrink():
