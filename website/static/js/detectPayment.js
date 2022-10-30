@@ -33,7 +33,7 @@ async function checkPaymentStatus() {
 //continous loop checking payment status
 async function autoDetect() {
   while (true) {
-    await timeout(3000);
+    await timeout(1500);
     await checkPaymentStatus();
   }
 }

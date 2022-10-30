@@ -100,12 +100,7 @@ def push(pumpNumber):
 
 ### PAYMENT REST API ###  
 
-# MAKE ORDER: USE PAYPAL "MAKE ORDER" REQUEST, EMBED LINK TO BARCODE, RENDER PAY ORDER PAGE TO USER
-@app.route('/makeOrder', methods=['POST'])
-def makeOrder():
-    # Get form data
-    formData = request.form # Get form data
-    drinkNumber = formData["drink"]
+def newOrder(drinkNumber):
     drinkName = db.child("maintainer").child("drinkSetting").child("drink{}".format(drinkNumber)).child("name").get().val()
     drinkPrice = db.child("maintainer").child("drinkSetting").child("drink{}".format(drinkNumber)).child("price").get().val()
 
@@ -129,7 +124,29 @@ def makeOrder():
     db.child("currentOrder").child("orderLink").set(paymentLink)
     db.child("currentOrder").child("pumpId").set(drinkNumber)
 
-    return render_template("payOrder.html", drink=drinkName, value = drinkPrice, orderID=orderID, paypalToken=paypalToken)
+def getCurrentOrder():
+    drinkName = db.child("currentOrder").child("drink").child("drinkName").get().val()
+    drinkPrice = db.child("currentOrder").child("drink").child("drinkPrice").get().val()
+    orderID = db.child("currentOrder").child("drink").child("orderID").get().val()
+    return [drinkName,drinkPrice,orderID]
+
+# PAY ORDER: open payment page, display barcode and cancel button
+@app.route('/payOrder',methods=['GET'])
+def payOrder():
+    orderInfo = getCurrentOrder()
+    return render_template("payOrder.html", drink=orderInfo[0], value = orderInfo[1], orderID=orderInfo[2])
+
+
+# MAKE ORDER: USE PAYPAL "MAKE ORDER" REQUEST, EMBED LINK TO BARCODE, RENDER PAY ORDER PAGE TO USER
+@app.route('/makeOrder', methods=['POST'])
+def makeOrder():
+    # Get form data
+    formData = request.form # Get form data
+    drinkNumber = formData["drink"]
+    newOrder(drinkNumber)
+    orderInfo = getCurrentOrder()
+
+    return redirect(url_for("payOrder"))
 
 # CANCEL ORDER: USE PAYPAL "CANCEL" ORDER REQUEST (CANCEL BUTTON IN PAYORDER.HTML)
 @app.route('/cancelOrder', methods=['POST'])
