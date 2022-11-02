@@ -59,7 +59,7 @@ def home():
 
 # LOGIN PAGE
 
-@app.route("/login", methods=["GET"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     # Retrieve data from database and crosscheck with info the user has
     #  input on the login page
@@ -106,39 +106,39 @@ def login():
 
 # REGISTER PAGE
 
-@app.route("/register", methods=["GET"])
+@app.route("/register", methods=["GET", "POST"])
 def register():
 
     
     usernameDB = db.child("users").child("username").get().val()
     passwordDB = db.child("users").child("password").get().val()
     machineIdDB = db.child("users").child("machineId").get().val()
+    
+    username = request.form.get('username')
+    password1 = request.form.get('password1')
+    password2 = request.form.get('password2')
+    machineId = request.form.get('machineId')
 
     if usernameDB == "" and passwordDB == "" and machineIdDB == "":
         if request.method == "POST":
-            username = request.form.get('username')
-            password1 = request.form.get('password1')
-            password2 = request.form.get('password2')
-            machineId = request.form.get('machineId')
+            if len(username) <= 3:
+                flash("username must be greater than 3 characters", category="error")
+            elif password1 != password2:
+                flash("Passwords don't match", category="error")
+            elif len(password1) < 7:
+                flash("Password must be at least 7 characters", category="error")
+            else:
+                # If user enters everything correctly, add that user to database with bcrypted password
 
-        if len(username) <= 3:
-            flash("username must be greater than 3 characters", category="error")
-        elif password1 != password2:
-            flash("Passwords don't match", category="error")
-        elif len(password1) < 7:
-            flash("Password must be at least 7 characters", category="error")
-        else:
-            # If user enters everything correctly, add that user to database with bcrypted password
+                # to check passwords : bcrypt.checkpw(byte_password, hashed_password)
+                bytepass = bytes(password2, 'utf-8')
+                hashpass = bcrypt.hashpw(bytepass, bcrypt.gensalt())
 
-            # to check passwords : bcrypt.checkpw(byte_password, hashed_password)
-            bytepass = bytes(password2, 'utf-8')
-            hashpass = bcrypt.hashpw(bytepass, bcrypt.gensalt())
+                db.child("users").child("username").set(username)
+                db.child("users").child("password").set(hashpass)
+                db.child("users").child("machineId").set(machineId)
 
-            db.child("users").child("username").set(username)
-            db.child("users").child("password").set(hashpass)
-            db.child("users").child("machineId").set(machineId)
-
-            flash("Thank you for registering!", category="success")
+                flash("Thank you for registering!", category="success")
 
     else:
         flash("You have already registered. You have been redirected to Login page" , category="success")
