@@ -66,12 +66,11 @@ def login():
     # Currently login page asks for username, password, machineId
 
     if request.method == "POST":
-
         # session.pop('user', None)
 
         # Get login form data
         username = request.form.get("username")
-        password = request.form.get("password").encode('utf-8')
+        password = request.form.get("password")
         machineId = request.form.get("machineId")
 
         # Do checks on user's login data
@@ -84,24 +83,23 @@ def login():
 
         # Get values of user's credentials from database to match the data user has
         #  entered on the Login page
-        usernameDB = db.child("user").child("username").get().val()
-        passwordDB = db.child("user").child("password").get().val()
-        machineIdDB = db.child("user").child("machineId").get().val()
+        usernameDB = db.child("users").child("username").get().val()
+        passwordDB = db.child("users").child("password").get().val()
+        machineIdDB = db.child("users").child("machineId").get().val()
 
         # In the case user has not registered yet, values from database will be empty strings. 
         #  If that's the case, redirect them to registeration page
         if usernameDB == "" and passwordDB == "" and machineIdDB == "" :
             flash("No account with login data found. Please register first.", category="error")
             # return render_template("register.html")
-            return redirect(url_for('main.register'))
-        
+            return redirect(url_for('register'))
         else:
-            if username == usernameDB and bcrypt.checkpw(password, passwordDB) :
+            print("123")
+            if username == usernameDB and password == passwordDB :
                 flash("Login Successful", category="success")
-
-                # return render_template("home.html")
-                return redirect(url_for('main.home'))
-
+                return redirect(url_for('home'))
+            else:
+                flash("Login unsuccessful", category="error")
     return render_template("login.html")
 
 # REGISTER PAGE
@@ -131,11 +129,11 @@ def register():
                 # If user enters everything correctly, add that user to database with bcrypted password
 
                 # to check passwords : bcrypt.checkpw(byte_password, hashed_password)
-                bytepass = bytes(password2, 'utf-8')
-                hashpass = bcrypt.hashpw(bytepass, bcrypt.gensalt())
+                # bytepass = bytes(password2, 'utf-8')
+                # hashpass = bcrypt.hashpw(bytepass, bcrypt.gensalt())
 
                 db.child("users").child("username").set(username)
-                db.child("users").child("password").set(hashpass)
+                db.child("users").child("password").set(password2)
                 db.child("users").child("machineId").set(machineId)
 
                 flash("Thank you for registering!", category="success")
