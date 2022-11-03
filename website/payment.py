@@ -15,7 +15,6 @@ def getToken():
         response = generateToken()
         jsonResponse = json.loads(response.content)
         paypalToken = jsonResponse["access_token"]
-        print(paypalToken)
 
     return paypalToken
 

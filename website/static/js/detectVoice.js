@@ -1,23 +1,17 @@
 /**
- * This file is responsible to detect if payment has been completed
+ * This file is responsible to detect if voice signal is set
  */
 
-//url:/https://api-m.sandbox.paypal.com/v2/checkout/orders/:order_id/capture
-
-console.log("detect payment is running...");
+console.log("detect voice is running...");
 
 // Use this function with await in async, work like sleep in python
 function timeout(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function checkPaymentStatus() {
-  const response = await fetch(`/detectPayment`, {
+async function checkVoiceSignal() {
+  const response = await fetch(`/detectVoice`, {
     method: "POST",
-    // headers: {
-    //   Authorization: `Bearer ${accessToken}`,
-    //   "Content-Type": "application/json",
-    // },
   });
 
   if (!response.ok) {
@@ -34,7 +28,7 @@ async function checkPaymentStatus() {
 async function autoDetect() {
   while (true) {
     await timeout(1500);
-    await checkPaymentStatus();
+    await checkVoiceSignal();
   }
 }
 

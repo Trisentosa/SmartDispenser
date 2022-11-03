@@ -1,5 +1,53 @@
 {% extends "base.html" %} {% block title %}Login{% endblock %} {% block head %}
-{% endblock %} {% block content %}
+{% endblock %} 
+
+{% block content %}
+
 <h1>Login Page</h1>
-<p>Login : Customer or maintainer login to their page</p>
+<!-- <p>Login : Customer or maintainer login to their page</p> -->
+
+<form method="post">
+    <h3 style="text-align:center;">Login</h3>
+
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input
+                type="text"
+                class="form-control"
+                id="username"
+                name="username"
+                placeholder="Enter username"
+                required="required" />
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input
+                type="password"
+                class="form-control"
+                id="password"
+                name="password"
+                placeholder="Enter password"
+                required="required" />
+    </div>
+
+    <div class="form-group">
+        <label for="machineId">Machine ID</label>
+        <input
+                type="text"
+                class="form-control"
+                id="machineId"
+                name="machineId"
+                placeholder="Enter Machine ID"  />
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-primary btn-lg mx-auto d-block" id="login" > login </button>
+
+    <!-- Forgot password ? -->
+
+
+</form>
+
 {% endblock %}
