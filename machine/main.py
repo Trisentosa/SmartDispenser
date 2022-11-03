@@ -126,6 +126,7 @@ def togglePump(x):
 
 def rotateMotor():
     i = 0
+    motor_step_counter = 0
     for i in range(step_count):
         for pin in range(0, len(motor_pins)):
             GPIO.output( motor_pins[pin], step_sequence[motor_step_counter][pin] )
