@@ -52,7 +52,6 @@ def isLoggedIn(role):
     checkRole = 'role' in session
     checkUsername = 'username' in session
     checkMachineId = 'machineId' in session
-    print(session['username'])
     if(checkRole and checkUsername and checkMachineId):
         if(session['role'] == role):
             if(session['role'] == "maintainer"):
@@ -187,6 +186,20 @@ def register():
     else:
         return render_template("register.html")
 
+@app.route("/logout", methods=["POST"])
+def logout():
+    checkRole = 'role' in session
+    checkUsername = 'username' in session
+    checkMachineId = 'machineId' in session
+    if checkRole and checkUsername and checkMachineId:
+        session.pop('username', None)
+        session.pop('machineId', None)
+        session.pop('role', None)
+        if 'lock' in session:
+            session.pop('lock',None)
+            db.child("status").child("lock").set(False)
+    flash("Logout Successfully!", category="success")
+    return render_template("login.html")
 
 # INSTRUCTION PAGE: USER PROCESS ORDER AFTER PAYMENT
 

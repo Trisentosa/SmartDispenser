@@ -1,5 +1,10 @@
 {% extends "base.html" %} {% block title %}Maintainer{% endblock %} {% block
 head %} {% endblock %} {% block content %}
+<form action="/logout" method="post">
+  <button type="submit" class="btn btn-warning logoutButton">
+    <span class="optionLabel">Logout</span>
+  </button>
+</form>
 <h1 class="my-3">Maintainer Page</h1>
 
 <div class="row my-5">

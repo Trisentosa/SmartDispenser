@@ -1,5 +1,10 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block head %}
 {% endblock %} {% block content %}
+<form action="/logout" method="post">
+  <button type="submit" class="btn btn-warning logoutButton">
+    <span class="optionLabel">Logout</span>
+  </button>
+</form>
 
 <span class="categoryText">Choose Drink</span>
 <span class="badge bg-success badgeText">Required</span>
