@@ -6,6 +6,8 @@ import pyrebase
 import json
 import payment
 import bcrypt
+import uuid
+
 
 app = Flask(__name__)
 # encrypts cookies and session data related to website
@@ -72,76 +74,80 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         machineId = request.form.get("machineId")
+        role = request.form.get("role")          
 
-        # Do checks on user's login data
-        if len(username) < 3:
-            flash("Invalid username", category="error")
-        if len(password) < 6:
-            flash("Password must be at least 7 characters", category="error")
-        if len(machineId) < 4:
-            flash("Machine ID must be 8 characters", category="error")
 
         # Get values of user's credentials from database to match the data user has
         #  entered on the Login page
-        usernameDB = db.child("users").child("username").get().val()
-        passwordDB = db.child("users").child("password").get().val()
-        machineIdDB = db.child("users").child("machineId").get().val()
-
-        # In the case user has not registered yet, values from database will be empty strings. 
-        #  If that's the case, redirect them to registeration page
-        if usernameDB == "" and passwordDB == "" and machineIdDB == "" :
-            flash("No account with login data found. Please register first.", category="error")
-            # return render_template("register.html")
-            return redirect(url_for('register'))
+        roleString = ""
+        if role == "maintainer":
+            roleString = "maintainerUser"
         else:
-            print("123")
-            if username == usernameDB and password == passwordDB :
-                flash("Login Successful", category="success")
-                return redirect(url_for('home'))
-            else:
-                flash("Login unsuccessful", category="error")
-    return render_template("login.html")
+            roleString = "mainUser"
+        users = db.child("users").child(roleString).get()
+        if users is not None:
+            for user in users.each():
+                dbPassword = user.val()["password"]
+                # successful login
+                if(user.val()["machineId"] == machineId and user.val()["username"] == username and bcrypt.checkpw(password.encode('utf8'), dbPassword.encode('utf8'))):
+                    return redirect(url_for('home'))
+        flash("Login unsuccessful", category="error")
+        return redirect(url_for('login'))
+    else:
+        return render_template("login.html")
 
 # REGISTER PAGE
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    usernameDB = db.child("users").child("username").get().val()
-    passwordDB = db.child("users").child("password").get().val()
-    machineIdDB = db.child("users").child("machineId").get().val()
-    
-    username = request.form.get('username')
-    password1 = request.form.get('password1')
-    password2 = request.form.get('password2')
-    machineId = request.form.get('machineId')
+    if request.method == "POST":
+        realMachineId = db.child("machineId").get().val() # in real world we'll check within a list of machine id's
+        username = request.form.get('username')
+        password1 = request.form.get('password1')
+        password2 = request.form.get('password2')
+        machineId = request.form.get('machineId')
+        role = request.form.get("role")
 
-    if usernameDB == "" and passwordDB == "" and machineIdDB == "":
-        if request.method == "POST":
-            if len(username) <= 3:
-                flash("username must be greater than 3 characters", category="error")
-            elif password1 != password2:
-                flash("Passwords don't match", category="error")
-            elif len(password1) < 7:
-                flash("Password must be at least 7 characters", category="error")
+        if len(username) <= 3:
+            flash("username must be greater than 3 characters", category="error")
+            return redirect(url_for('register'))
+        elif password1 != password2:
+            flash("Passwords don't match", category="error")
+            return redirect(url_for('register'))
+        elif len(password1) < 7:
+            flash("Password must be at least 7 characters", category="error")
+            return redirect(url_for('register'))
+        elif machineId != realMachineId:
+            flash("Invalid Machine ID!", category="error")
+            return redirect(url_for('register'))
+        else:
+            # If user enters everything correctly, add that user to database with bcrypted password
+            # to check passwords : bcrypt.checkpw(byte_password, hashed_password)
+            bytepass = bytes(password2, 'utf-8')
+            hashpass = bcrypt.hashpw(bytepass, bcrypt.gensalt()).decode()
+            userId = str(uuid.uuid1())
+            numOfMachine = len(db.child("users").child("mainUser").get().val())
+            numOfMaintainer = len(db.child("users").child("maintainerUser").get().val())
+            userData = {"userId":userId,"username":username,"password":hashpass,"machineId":machineId}
+            if role == "maintainer" and numOfMaintainer < 5:
+                maintainers = db.child("users").child("maintainerUser").get()
+                if maintainers is not None:
+                    for user in maintainers.each():
+                        usernameDb = user.val()["username"]
+                        # if username already exist
+                        if(usernameDb == username):
+                            flash("Username already exist!", category="error")
+                            return redirect(url_for('register'))
+                db.child("users").child("maintainerUser").push(userData)
+            elif role == "machine" and numOfMachine < 1:
+                db.child("users").child("mainUser").push(userData)
             else:
-                # If user enters everything correctly, add that user to database with bcrypted password
-
-                # to check passwords : bcrypt.checkpw(byte_password, hashed_password)
-                # bytepass = bytes(password2, 'utf-8')
-                # hashpass = bcrypt.hashpw(bytepass, bcrypt.gensalt())
-
-                db.child("users").child("username").set(username)
-                db.child("users").child("password").set(password2)
-                db.child("users").child("machineId").set(machineId)
-
-                flash("Thank you for registering!", category="success")
-
+                flash("Number of accounts over limit!", category="error")
+                return redirect(url_for('register'))
+        return redirect(url_for('login'))
     else:
-        flash("You have already registered. You have been redirected to Login page" , category="success")
-        # return render_template("login.html")
-        return redirect(url_for('main.login'))
+        return render_template("register.html")
 
-    return render_template("register.html", user=username)
 
 # INSTRUCTION PAGE: USER PROCESS ORDER AFTER PAYMENT
 
