@@ -32,7 +32,6 @@ db = firebase.database()
 
 # increment drink count in order history
 
-
 def incrementDrinkCount(drinkName):
     currentNumOfOrder = db.child("maintainer").child(
         "orderHistory").child(drinkName).get().val()
@@ -41,23 +40,44 @@ def incrementDrinkCount(drinkName):
 
 # initialize new drink to 0 if it doesnt exist in order history
 
-
 def addDrink(drinkName):
     drinkHistory = db.child("maintainer").child(
         "orderHistory").child(drinkName).get().val()
     if drinkHistory == None:
         db.child("maintainer").child("orderHistory").child(drinkName).set(0)
 
+#check if a user with a certain role is logged in using session
+# parameter is role string ("maintainer" or "machine")
+def isLoggedIn(role):
+    checkRole = 'role' in session
+    checkUsername = 'username' in session
+    checkMachineId = 'machineId' in session
+    print(session['username'])
+    if(checkRole and checkUsername and checkMachineId):
+        if(session['role'] == role):
+            if(session['role'] == "maintainer"):
+                return True
+            elif(session['role'] == "machine"):
+                if(session['lock'] == True):
+                    return True
+                else:
+                    return False
+    else:
+        return False
+
 ### BASIC ROUTES ###
 
 # HOME PAGE: USER CHOOSE DRINK
 
-
 @app.route("/", methods=["GET"])
 def home():
-    db.child("status").child("orderSignal").set(False)
-    drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
-    return render_template("home.html", drinkSetting=drinkSetting)
+    if isLoggedIn("machine"):
+        db.child("status").child("orderSignal").set(False)
+        drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
+        return render_template("home.html", drinkSetting=drinkSetting)
+    else:
+        flash("You are not logged in as machine!", category="error")
+        return redirect(url_for('login'))
 
 # LOGIN PAGE
 
@@ -69,13 +89,11 @@ def login():
 
     if request.method == "POST":
         # session.pop('user', None)
-
         # Get login form data
         username = request.form.get("username")
         password = request.form.get("password")
         machineId = request.form.get("machineId")
         role = request.form.get("role")          
-
 
         # Get values of user's credentials from database to match the data user has
         #  entered on the Login page
@@ -85,12 +103,33 @@ def login():
         else:
             roleString = "mainUser"
         users = db.child("users").child(roleString).get()
+        lock = db.child("status").child("lock").get().val() # for machine
         if users is not None:
             for user in users.each():
                 dbPassword = user.val()["password"]
                 # successful login
                 if(user.val()["machineId"] == machineId and user.val()["username"] == username and bcrypt.checkpw(password.encode('utf8'), dbPassword.encode('utf8'))):
-                    return redirect(url_for('home'))
+                    # if role is machine check if other device already has the lock
+                    session['username'] = username 
+                    session['role'] = role
+                    session['machineId'] = machineId  
+                    if role == "machine":
+                        if lock == True: 
+                            if 'lock' in session: # if lock is within this device, SUCCESS
+                                session.permanent = True
+                                return redirect(url_for('home')) 
+                            else: # if lock is on another device , fail
+                                flash("Machine already set in another device!", category="error")
+                                return redirect(url_for('login'))
+                        else: # if lock is never set or previous owner logged out
+                            db.child("status").child("lock").set(True)
+                            session['lock'] = True
+                            session.permanent = True
+                            return redirect(url_for('home'))  #SUCCESS
+                    else: # maintainer
+                        session.permanent = True
+                        return redirect(url_for("maintainer")) #SUCCESS
+                    
         flash("Login unsuccessful", category="error")
         return redirect(url_for('login'))
     else:
@@ -151,24 +190,28 @@ def register():
 
 # INSTRUCTION PAGE: USER PROCESS ORDER AFTER PAYMENT
 
-
 @app.route("/instruction", methods=["GET"])
 def instruction():
-    return render_template("instruction.html")
+    if isLoggedIn("machine"):
+        return render_template("instruction.html")
+    else:
+        flash("You are not logged in as machine!", category="error")
+        return redirect(url_for('login'))
 
 # MAINTAINER PAGE: MAINTAINER SETS DRINKS AND SEES PAST HISTORY
 
-
 @app.route("/maintainer", methods=["GET"])
 def maintainer():
-    totalProfit = db.child("maintainer").child("totalProfit").get().val()
-    drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
-    # when machine first initialize orderHistory value is ""
-    orderHistory = db.child("maintainer").child("orderHistory").get().val()
-    return render_template("maintainer.html", profit=totalProfit, drinkSetting=drinkSetting, orderHistory=orderHistory)
-
+    if isLoggedIn("maintainer"):
+        totalProfit = db.child("maintainer").child("totalProfit").get().val()
+        drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
+        # when machine first initialize orderHistory value is ""
+        orderHistory = db.child("maintainer").child("orderHistory").get().val()
+        return render_template("maintainer.html", profit=totalProfit, drinkSetting=drinkSetting, orderHistory=orderHistory)
+    else:
+        flash("You are not logged in as maintainer!", category="error")
+        return redirect(url_for('login'))
 # (TEMP) CONTROLLER: TEMPORARY PAGE FOR TESTING PUMP
-
 
 @app.route("/controller", methods=["GET", "POST"])
 def controller():
@@ -185,7 +228,6 @@ def controller():
 
 # (TEMP) PUSH: TOGGLE PUMP ON/OFF, CONTROLLED VIA FRONTEND BUTTON
 
-
 @app.route("/pump/<pumpNumber>", methods=["POST"])
 def push(pumpNumber):
     pumpStatus = db.child("pumps").child(
@@ -201,7 +243,6 @@ def push(pumpNumber):
     return response
 
 ### PAYMENT REST API ###
-
 
 def newOrder(drinkNumber):
     drinkName = db.child("maintainer").child("drinkSetting").child(
@@ -231,7 +272,6 @@ def newOrder(drinkNumber):
     db.child("currentOrder").child("orderLink").set(paymentLink)
     db.child("currentOrder").child("pumpId").set(drinkNumber)
 
-
 def getCurrentOrder():
     drinkName = db.child("currentOrder").child("drink").get().val()
     drinkPrice = db.child("currentOrder").child("price").get().val()
@@ -240,42 +280,52 @@ def getCurrentOrder():
 
 # PAY ORDER: open payment page, display barcode and cancel button
 
-
 @app.route('/payOrder', methods=['GET'])
 def payOrder():
-    orderInfo = getCurrentOrder()
-    return render_template("payOrder.html", drink=orderInfo[0], value=orderInfo[1], orderID=orderInfo[2])
-
+    if isLoggedIn("machine"):
+        orderInfo = getCurrentOrder()
+        return render_template("payOrder.html", drink=orderInfo[0], value=orderInfo[1], orderID=orderInfo[2])
+    else:
+        flash("You are not logged in as machine!", category="error")
+        return redirect(url_for('login'))
+    
 
 # MAKE ORDER: USE PAYPAL "MAKE ORDER" REQUEST, EMBED LINK TO BARCODE, RENDER PAY ORDER PAGE TO USER
 @app.route('/makeOrder', methods=['POST'])
 def makeOrder():
-    # Get form data
-    formData = request.form  # Get form data
-    if len(formData) > 0:
-        drinkNumber = formData["drink"]
-        newOrder(drinkNumber)
-        db.child("status").child("state").set(1)
-        return redirect(url_for("payOrder"))
+    if isLoggedIn("machine"):
+        # Get form data
+        formData = request.form  # Get form data
+        if len(formData) > 0:
+            drinkNumber = formData["drink"]
+            newOrder(drinkNumber)
+            db.child("status").child("state").set(1)
+            return redirect(url_for("payOrder"))
+        else:
+            return redirect(url_for("home"))
     else:
-        return redirect(url_for("home"))
+        flash("You are not logged in as machine!", category="error")
+        return redirect(url_for('login'))
+
 
 # CANCEL ORDER: USE PAYPAL "CANCEL" ORDER REQUEST (CANCEL BUTTON IN PAYORDER.HTML)
 
-
 @app.route('/cancelOrder', methods=['POST'])
 def cancelOrder():
-    orderID = db.child("currentOrder").child("orderID").get()
+    if isLoggedIn("machine"):
+        orderID = db.child("currentOrder").child("orderID").get()
+        # Cancel Order
+        paypalToken = payment.getToken()
+        headers = {"Authorization": "Bearer {}".format(paypalToken)}
+        cancelRequest = requests.delete(
+            "https://api-m.sandbox.paypal.com/v1/checkout/orders/{}".format(orderID.val()), headers=headers)
+        return redirect(url_for("home"))
+    else:
+        flash("You are not logged in as machine!", category="error")
+        return redirect(url_for('login'))
 
-    # Cancel Order
-    paypalToken = payment.getToken()
-    headers = {"Authorization": "Bearer {}".format(paypalToken)}
-    cancelRequest = requests.delete(
-        "https://api-m.sandbox.paypal.com/v1/checkout/orders/{}".format(orderID.val()), headers=headers)
-    return redirect(url_for("home"))
 
 # DETECT PAYMENT: USE PAYPAL "CAPTURE" ORDER REQUEST, AND USE ITS STATUS CODE TO DETECT IF AN ORDER IS COMPLETED
-
 
 @app.route('/detectPayment', methods=['POST'])
 def detectPayment():
@@ -306,7 +356,6 @@ def detectPayment():
 
 ### VOICE CONTROL ###
 
-
 @app.route('/detectVoice', methods=['POST'])
 def detectVoice():
     voiceSignal = db.child("voiceSignal").child("isSet").get().val()
@@ -321,6 +370,7 @@ def detectVoice():
         return stat
 
 ### INSTRUCTION (WAIT) ###
+
 @app.route('/waitUser', methods=['POST'])
 def waitUser():
     orderSignal = db.child("status").child("orderSignal").get().val()
@@ -340,18 +390,21 @@ def waitUser():
 
 @app.route('/setDrink', methods=['POST'])
 def setDrink():
-    formData = request.form  # Get form data
-    for i in range(1, 7):
-        drinkName = formData["drink{}".format(i)]
-        drinkPrice = 0 if float(formData["price{}".format(i)]) < 0 else float(
-            formData["price{}".format(i)])
-        db.child("maintainer").child("drinkSetting").child(
-            "drink{}".format(i)).child("name").set(drinkName)
-        db.child("maintainer").child("drinkSetting").child(
-            "drink{}".format(i)).child("price").set(drinkPrice)
-        addDrink(drinkName)
-    return redirect(url_for("home"))
-
+    if isLoggedIn("maintainer"):
+        formData = request.form  # Get form data
+        for i in range(1, 7):
+            drinkName = formData["drink{}".format(i)]
+            drinkPrice = 0 if float(formData["price{}".format(i)]) < 0 else float(
+                formData["price{}".format(i)])
+            db.child("maintainer").child("drinkSetting").child(
+                "drink{}".format(i)).child("name").set(drinkName)
+            db.child("maintainer").child("drinkSetting").child(
+                "drink{}".format(i)).child("price").set(drinkPrice)
+            addDrink(drinkName)
+        return redirect(url_for("home"))
+    else:
+        flash("You are not logged in as maintainer!", category="error")
+        return redirect(url_for('login'))
 
 if __name__ == '__main__':
     app.run(debug=True)
