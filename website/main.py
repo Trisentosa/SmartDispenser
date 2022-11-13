@@ -106,8 +106,6 @@ def login():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-
-    
     usernameDB = db.child("users").child("username").get().val()
     passwordDB = db.child("users").child("password").get().val()
     machineIdDB = db.child("users").child("machineId").get().val()
@@ -316,10 +314,23 @@ def detectVoice():
         stat = Response(status=204)
         return stat
 
+### INSTRUCTION (WAIT) ###
+@app.route('/waitUser', methods=['POST'])
+def waitUser():
+    orderSignal = db.child("status").child("orderSignal").get().val()
+    irSignal = db.child("status").child("irSignal").get().val()
+    state = db.child("status").child("state").get().val()
+    machineStatus = {
+        "orderSignal": orderSignal,
+        "irSignal": irSignal,
+        "state": state
+    }
+    machineStatusJSON = json.dumps(machineStatus)
+    return machineStatusJSON
+
 ### MAINTAINER ROUTE ###
 
 # SET DRINK: SET THE DRINK SETTING (PRICE AND NAME) IN MAINTAINER PAGE
-
 
 @app.route('/setDrink', methods=['POST'])
 def setDrink():
