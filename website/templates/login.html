@@ -1,13 +1,10 @@
 {% extends "base.html" %} {% block title %}Login{% endblock %} {% block head %}
 {% endblock %} {% block content %}
 
-<h1>Login Page</h1>
-<!-- <p>Login : Customer or maintainer login to their page</p> -->
+<form method="post" class="formBox mx-auto">
+  <h1 class="mainHeader">Login</h3>
 
-<form method="post">
-  <h3 style="text-align: center">Login</h3>
-
-  <div class="form-group">
+  <div class="form-group textEntry mx-auto">
     <label for="username">Username</label>
     <input
       type="text"
@@ -18,7 +15,7 @@
     />
   </div>
 
-  <div class="form-group">
+  <div class="form-group textEntry mx-auto">
     <label for="password">Password</label>
     <input
       type="password"
@@ -29,13 +26,13 @@
     />
   </div>
 
-  <div class="form-group">
+  <div class="form-group textEntry mx-auto">
     <label for="machineId">Machine ID</label>
     <input type="text" class="form-control" id="machineId" name="machineId" />
   </div>
 
   <br />
-  <div class="form-check">
+  <div class="form-check textEntry mx-auto">
     <input
       class="form-check-input"
       type="radio"
@@ -45,7 +42,7 @@
     />
     <label class="form-check-label" for="roleRadio1"> I am main machine </label>
   </div>
-  <div class="form-check">
+  <div class="form-check textEntry mx-auto">
     <input
       class="form-check-input"
       type="radio"
@@ -59,7 +56,7 @@
 
   <button
     type="submit"
-    class="btn btn-primary btn-lg mx-auto d-block"
+    class="btn btn-primary btn-lg d-block mainButton"
     id="login"
   >
     login
@@ -68,7 +65,7 @@
   <!-- Forgot password ? -->
 </form>
 <a href="http://127.0.0.1:5000/register"
-  >Don't have an account? Register here</a
+  ><p class="text-center">Don't have an account? Register here</p> </a
 >
 
 {% endblock %}

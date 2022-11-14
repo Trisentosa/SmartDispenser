@@ -7,15 +7,20 @@ import json
 import payment
 import bcrypt
 import uuid
+from dotenv import load_dotenv
 
+#ENV Variables
+load_dotenv()
+FIREBASE_KEY = os.getenv("FIREBASE_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 app = Flask(__name__)
 # encrypts cookies and session data related to website
-app.config['SECRET_KEY'] = "tempkey"
+app.config['SECRET_KEY'] = SECRET_KEY
 
 # FIREBASE CONFIG AND INITIALIZATION
 config = {
-    "apiKey": "AIzaSyBY8DyNfV_B2NSlKHr4sZRvRT1fBMlOuwQ",
+    "apiKey": FIREBASE_KEY,
     "authDomain": "smartdispenser-ac92a.firebaseapp.com",
     "databaseURL": "https://smartdispenser-ac92a-default-rtdb.firebaseio.com",
     "projectId": "smartdispenser-ac92a",
@@ -74,6 +79,8 @@ def home():
         db.child("status").child("orderSignal").set(False)
         drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
         return render_template("home.html", drinkSetting=drinkSetting)
+    elif isLoggedIn("maintainer"):
+        return redirect(url_for('maintainer'))
     else:
         flash("You are not logged in as machine!", category="error")
         return redirect(url_for('login'))
@@ -414,7 +421,7 @@ def setDrink():
             db.child("maintainer").child("drinkSetting").child(
                 "drink{}".format(i)).child("price").set(drinkPrice)
             addDrink(drinkName)
-        return redirect(url_for("home"))
+        return redirect(url_for("maintainer"))
     else:
         flash("You are not logged in as maintainer!", category="error")
         return redirect(url_for('login'))
