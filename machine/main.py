@@ -189,7 +189,9 @@ while True:
         #Only retrieve pumpID if user makes a order
         if(orderSignal == True):
             print("Making the order ...")
-            rotateMotor()        
+            addTopping = db.child("currentOrder").child("addTopping").get().val()
+            if(addTopping):
+                rotateMotor()        
             pumpID = int(db.child("currentOrder").child("pumpId").get().val())
             togglePump(pumpID)
             db.child("status").child("state").set(0)
