@@ -7,6 +7,7 @@ head %} {% endblock %} {% block content %}
 </form>
 <h1 class="my-3 text-center">Maintainer Page</h1>
 
+<!-- Drink Setting -->
 <div class="row my-5">
   <section class="col-4"></section>
   <form action="/setDrink" method="post" class="col-4">
@@ -30,6 +31,29 @@ head %} {% endblock %} {% block content %}
   <section class="col-4"></section>
 </div>
 
+<!-- Topping Setting -->
+<div class="row my-5">
+  <section class="col-4"></section>
+  <form action="/setTopping" method="post" class="col-4">
+    <h3 class="text-center">Topping Setting:</h3>
+    <div class="input-group mb-3">
+      <span class="input-group-text">Topping: </span>
+      <input
+        type="text"
+        class="form-control"
+        name="topping"
+        value="{{toppingName}}"
+        placeholder="Topping name..."
+      />>
+    </div>
+    <button type="submit" class="btn btn-primary d-block mx-auto">
+      Set Topping
+    </button>
+  </form>
+  <section class="col-4"></section>
+</div>
+
+<!-- Order Data and History -->
 <div class="row my-5">
   <section class="col-4"></section>
   <section class="col-4">

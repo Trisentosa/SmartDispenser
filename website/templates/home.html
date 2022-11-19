@@ -6,15 +6,19 @@
   </button>
 </form>
 
-<span class="categoryText">Choose Drink</span>
-<span class="badge bg-success badgeText">Required</span>
 <!-- ORDER FORM -->
 <form action="/makeOrder" method="post">
+  <span class="categoryText">Choose Drink</span>
+  <span class="badge bg-success badgeText">Required</span>
   <!-- Radio Select Drink Option -->
   <div class="text-center verticalButtonLayout">
     {% for i in range(1,7) %}
     <label class="btn btn-outline-dark optionButton">
+      {% if i == 1%}
+      <input type="radio" name="drink" value="{{i}}" checked />
+      {%else%}
       <input type="radio" name="drink" value="{{i}}" />
+      {%endif%}
       <div class="verticalButtonLayout">
         <span class="optionLabel"
           >{{drinkSetting["drink{}".format(i)]["name"]}}</span
@@ -25,6 +29,20 @@
       </div>
     </label>
     {% endfor %}
+    <span class="categoryText">Add {{toppingName}}</span>
+    <span class="badge bg-success badgeText">Required</span>
+    <label class="btn btn-outline-dark optionButton">
+      <input type="radio" name="addTopping" value="true" checked />
+      <div class="verticalButtonLayout">
+        <span class="optionLabel">Yes</span>
+      </div>
+    </label>
+    <label class="btn btn-outline-dark optionButton">
+      <input type="radio" name="addTopping" value="false" />
+      <div class="verticalButtonLayout">
+        <span class="optionLabel">No</span>
+      </div>
+    </label>
   </div>
 
   <!-- SUBMIT BUTTON -->

@@ -16,11 +16,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 app = Flask(__name__)
 # encrypts cookies and session data related to website
-app.config['SECRET_KEY'] = SECRET_KEY
+app.config['SECRET_KEY'] = "thisisteamkiwisecret"
 
 # FIREBASE CONFIG AND INITIALIZATION
 config = {
-    "apiKey": FIREBASE_KEY,
+    "apiKey": "AIzaSyBY8DyNfV_B2NSlKHr4sZRvRT1fBMlOuwQ",
     "authDomain": "smartdispenser-ac92a.firebaseapp.com",
     "databaseURL": "https://smartdispenser-ac92a-default-rtdb.firebaseio.com",
     "projectId": "smartdispenser-ac92a",
@@ -57,11 +57,12 @@ def isLoggedIn(role):
     checkRole = 'role' in session
     checkUsername = 'username' in session
     checkMachineId = 'machineId' in session
+    lock = db.child("status").child("lock").get().val() # for machine
     if(checkRole and checkUsername and checkMachineId):
         if(session['role'] == role):
             if(session['role'] == "maintainer"):
                 return True
-            elif(session['role'] == "machine"):
+            elif(session['role'] == "machine" and lock):
                 if(session['lock'] == True):
                     return True
                 else:
@@ -78,7 +79,8 @@ def home():
     if isLoggedIn("machine"):
         db.child("status").child("orderSignal").set(False)
         drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
-        return render_template("home.html", drinkSetting=drinkSetting)
+        toppingName = db.child("maintainer").child("topping").get().val()
+        return render_template("home.html", drinkSetting=drinkSetting, toppingName=toppingName)
     elif isLoggedIn("maintainer"):
         return redirect(url_for('maintainer'))
     else:
@@ -206,7 +208,7 @@ def logout():
             session.pop('lock',None)
             db.child("status").child("lock").set(False)
     flash("Logout Successfully!", category="success")
-    return render_template("login.html")
+    return redirect(url_for('login'))
 
 # INSTRUCTION PAGE: USER PROCESS ORDER AFTER PAYMENT
 
@@ -225,9 +227,10 @@ def maintainer():
     if isLoggedIn("maintainer"):
         totalProfit = db.child("maintainer").child("totalProfit").get().val()
         drinkSetting = db.child("maintainer").child("drinkSetting").get().val()
+        toppingName = db.child("maintainer").child("topping").get().val()
         # when machine first initialize orderHistory value is ""
         orderHistory = db.child("maintainer").child("orderHistory").get().val()
-        return render_template("maintainer.html", profit=totalProfit, drinkSetting=drinkSetting, orderHistory=orderHistory)
+        return render_template("maintainer.html", profit=totalProfit, drinkSetting=drinkSetting, orderHistory=orderHistory, toppingName=toppingName)
     else:
         flash("You are not logged in as maintainer!", category="error")
         return redirect(url_for('login'))
@@ -264,7 +267,7 @@ def push(pumpNumber):
 
 ### PAYMENT REST API ###
 
-def newOrder(drinkNumber):
+def newOrder(drinkNumber, addTopping):
     drinkName = db.child("maintainer").child("drinkSetting").child(
         "drink{}".format(drinkNumber)).child("name").get().val()
     drinkPrice = db.child("maintainer").child("drinkSetting").child(
@@ -291,12 +294,19 @@ def newOrder(drinkNumber):
     db.child("currentOrder").child("price").set(drinkPrice)
     db.child("currentOrder").child("orderLink").set(paymentLink)
     db.child("currentOrder").child("pumpId").set(drinkNumber)
+    if addTopping == "false" :
+        db.child("currentOrder").child("addTopping").set(False)
+    else:
+        db.child("currentOrder").child("addTopping").set(True)
+    
+    
 
 def getCurrentOrder():
     drinkName = db.child("currentOrder").child("drink").get().val()
     drinkPrice = db.child("currentOrder").child("price").get().val()
     orderID = db.child("currentOrder").child("orderID").get().val()
-    return [drinkName, drinkPrice, orderID]
+    addTopping = db.child("currentOrder").child("addTopping").get().val()
+    return [drinkName, drinkPrice, orderID, addTopping]
 
 # PAY ORDER: open payment page, display barcode and cancel button
 
@@ -304,7 +314,8 @@ def getCurrentOrder():
 def payOrder():
     if isLoggedIn("machine"):
         orderInfo = getCurrentOrder()
-        return render_template("payOrder.html", drink=orderInfo[0], value=orderInfo[1], orderID=orderInfo[2])
+        toppingName = db.child("maintainer").child("topping").get().val()
+        return render_template("payOrder.html", drink=orderInfo[0], value=orderInfo[1], orderID=orderInfo[2], addTopping=orderInfo[3], toppingName=toppingName)
     else:
         flash("You are not logged in as machine!", category="error")
         return redirect(url_for('login'))
@@ -318,7 +329,8 @@ def makeOrder():
         formData = request.form  # Get form data
         if len(formData) > 0:
             drinkNumber = formData["drink"]
-            newOrder(drinkNumber)
+            addTopping = formData["addTopping"]
+            newOrder(drinkNumber, addTopping)
             db.child("status").child("state").set(1)
             return redirect(url_for("payOrder"))
         else:
@@ -421,6 +433,19 @@ def setDrink():
             db.child("maintainer").child("drinkSetting").child(
                 "drink{}".format(i)).child("price").set(drinkPrice)
             addDrink(drinkName)
+        return redirect(url_for("maintainer"))
+    else:
+        flash("You are not logged in as maintainer!", category="error")
+        return redirect(url_for('login'))
+
+# SET Topping: SET THE TOPPING SETTING (NAME) IN MAINTAINER PAGE
+
+@app.route('/setTopping', methods=['POST'])
+def setTopping():
+    if isLoggedIn("maintainer"):
+        formData = request.form  # Get form data
+        toppingName = formData["topping"]
+        db.child("maintainer").child("topping").set(toppingName)
         return redirect(url_for("maintainer"))
     else:
         flash("You are not logged in as maintainer!", category="error")
