@@ -15,6 +15,8 @@ import pyrebase
 from twilio.rest import Client
 import speech_recognition as sr
 import pyttsx3
+from gtts import gTTS
+from playsound import playsound
 
 
 '''                   Voice Control Setup                       '''
@@ -137,12 +139,27 @@ def rotateMotor():
         motor_step_counter = (motor_step_counter - 1) % 8 # clockwise, cc +1 instead
         time.sleep( step_sleep )
 
+#voice assistant
+db.child("voiceAssistant").child("voiceState").set(0) #init voice state to 0
+db.child("voiceAssistant").child("sayIt").set(True) #init sayIt True
+voiceDict = {0:"welcome.mp3",1:"orderComplete.mp3",2:"paymentComplete.mp3",3:"makingOrder.mp3",4:"orderDone.mp3"}
+def voiceAssistant():
+    assistantData = db.child("voiceAssistant").get().val()
+    isActive = db.child("voiceAssistant").child("isActive").get().val()
+    sayIt = db.child("voiceAssistant").child("sayIt").get().val()
+    voiceState = assistantData["voiceState"]
+    if isActive and sayIt:
+        playsound('audio/{}'.format(voiceDict[voiceState]))
+        db.child("voiceAssistant").child("sayIt").set(False)
+
 '''                   MAIN LOOP                       '''
 while True:
 
     pumpID = 0
     motorID = 0
     state = db.child("status").child("state").get().val()
+
+    voiceAssistant()
 
     # LISTENING FOR VOICE STATE (0)
     if state == 0:
@@ -189,12 +206,19 @@ while True:
         #Only retrieve pumpID if user makes a order
         if(orderSignal == True):
             print("Making the order ...")
+            #voice assistant set voiceState 3
+            db.child("voiceAssistant").child("voiceState").set(3)
+            db.child("voiceAssistant").child("sayIt").set(True)
+            #Order making
             addTopping = db.child("currentOrder").child("addTopping").get().val()
             if(addTopping):
                 rotateMotor()        
             pumpID = int(db.child("currentOrder").child("pumpId").get().val())
             togglePump(pumpID)
             db.child("status").child("state").set(0)
+            #voice assistant set voiceState 3
+            db.child("voiceAssistant").child("voiceState").set(4)
+            db.child("voiceAssistant").child("sayIt").set(True)
 
         time.sleep(0.5)
 

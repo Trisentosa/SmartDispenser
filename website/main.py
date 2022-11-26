@@ -328,10 +328,14 @@ def makeOrder():
         # Get form data
         formData = request.form  # Get form data
         if len(formData) > 0:
+            #create order
             drinkNumber = formData["drink"]
             addTopping = formData["addTopping"]
             newOrder(drinkNumber, addTopping)
             db.child("status").child("state").set(1)
+            #voice assistant set voiceState 1
+            db.child("voiceAssistant").child("voiceState").set(1)
+            db.child("voiceAssistant").child("sayIt").set(True)
             return redirect(url_for("payOrder"))
         else:
             return redirect(url_for("home"))
@@ -380,6 +384,9 @@ def detectPayment():
         incrementDrinkCount(drinkName)
         # set orderSignal
         db.child("status").child("orderSignal").set(True)
+        #voiceAssistant set voiceState = 2
+        db.child("voiceAssistant").child("voiceState").set(2)
+        db.child("voiceAssistant").child("sayIt").set(True)
         return redirect(url_for("instruction"))
     else:
         # 201 status code
@@ -400,6 +407,25 @@ def detectVoice():
     else:
         stat = Response(status=204)
         return stat
+
+@app.route("/voiceActive", methods=['GET','POST'])
+def voiceActive():
+    isActive = db.child("voiceAssistant").child("isActive").get().val()
+    if request.method == "GET":
+        voiceActive = {
+            "isActive": isActive,
+        }
+        voiceActiveJSON = json.dumps(voiceActive)
+        return voiceActive
+    elif request.method == "POST": 
+        db.child("voiceAssistant").child("isActive").set(not isActive)
+        isActive = not isActive
+        voiceActive = {
+            "isActive": isActive,
+        }
+        voiceActiveJSON = json.dumps(voiceActive)
+        return voiceActive
+
 
 ### INSTRUCTION (WAIT) ###
 
