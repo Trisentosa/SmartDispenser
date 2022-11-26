@@ -1,16 +1,18 @@
 {% extends "base.html" %} {% block title %}Maintainer{% endblock %} {% block
 head %} {% endblock %} {% block content %}
-<form action="/logout" method="post">
-  <button type="submit" class="btn btn-warning logoutButton">
-    <span class="optionLabel">Logout</span>
-  </button>
-</form>
-<h1 class="my-3 text-center">Maintainer Page</h1>
 
 <!-- Drink Setting -->
-<div class="row my-5">
-  <section class="col-4"></section>
-  <form action="/setDrink" method="post" class="col-4">
+<main class="row my-5">
+  <section class="col-md-2">
+    <form action="/logout" method="post">
+      <button type="submit" class="btn btn-warning d-block mx-auto">
+        <span class="sideLabel"
+          ><span class="material-icons icon"> logout </span> Logout</span
+        >
+      </button>
+    </form>
+  </section>
+  <form action="/setDrink" method="post" class="col-md-8">
     <h3 class="text-center">Drink Setting:</h3>
     {% for i in range(1,7) %}
     <div class="input-group mb-3">
@@ -24,17 +26,17 @@ head %} {% endblock %} {% block content %}
       step=".01" />
     </div>
     {% endfor %}
-    <button type="submit" class="btn btn-primary d-block mx-auto">
+    <button type="submit" class="btn btn-success d-block mx-auto">
       Set Drink
     </button>
   </form>
-  <section class="col-4"></section>
-</div>
+  <section class="col-md-2"></section>
+</main>
 
 <!-- Topping Setting -->
-<div class="row my-5">
-  <section class="col-4"></section>
-  <form action="/setTopping" method="post" class="col-4">
+<main class="row my-5">
+  <section class="col-md-2"></section>
+  <form action="/setTopping" method="post" class="col-md-8">
     <h3 class="text-center">Topping Setting:</h3>
     <div class="input-group mb-3">
       <span class="input-group-text">Topping: </span>
@@ -44,19 +46,19 @@ head %} {% endblock %} {% block content %}
         name="topping"
         value="{{toppingName}}"
         placeholder="Topping name..."
-      />>
+      />
     </div>
-    <button type="submit" class="btn btn-primary d-block mx-auto">
+    <button type="submit" class="btn btn-success d-block mx-auto">
       Set Topping
     </button>
   </form>
-  <section class="col-4"></section>
-</div>
+  <section class="col-md-2"></section>
+</main>
 
 <!-- Order Data and History -->
-<div class="row my-5">
-  <section class="col-4"></section>
-  <section class="col-4">
+<main class="row my-5">
+  <section class="col-md-2"></section>
+  <section class="col-md-8">
     <h3 class="text-center">Order Data and History:</h3>
     <h5 class="text-center mb-3">Total profit is: ${{profit}}</h5>
 
@@ -81,7 +83,7 @@ head %} {% endblock %} {% block content %}
     {%else%} <i>No drink history ...</i> {% endif %}
   </section>
 
-  <section class="col-4"></section>
-</div>
+  <section class="col-md-2"></section>
+</main>
 
 {% endblock %}
