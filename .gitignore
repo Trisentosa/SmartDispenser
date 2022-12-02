@@ -1,3 +1,9 @@
 REST.http
 machine/main.py.save.2
 machine/main.py.save.1
+.env
+Include
+Lib
+Scripts
+pyvenv.cfg
+share

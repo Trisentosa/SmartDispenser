@@ -2,8 +2,11 @@
 %} {% endblock %} {% block content %}
 
 <div class="text-center my-2">
-  <h3>Your Order:</h3>
+  <h2 class="mainHeader"><b>Your Order:</b></h2>
   <h5>Flavor: {{drink.capitalize()}}</h5>
+  {% if addTopping:%}
+  <h5>Add {{toppingName}}</h5>
+  {% endif %}
   <h6>Total : ${{value}}</h6>
   <img src="static/images/barcode.png" alt="payment barcode" height="300px" />
   <div>

@@ -34,6 +34,8 @@ for key,value in drinkSettings.items():
     drinkNumber = key[-1] # key : drink<x> where x is drink number
     words[drinkNumber] = drinkName
 
+sr.Microphone.list_microphone_names()
+
 #MAIN LOOP
 while True:
     #STATE 0: LISTEN

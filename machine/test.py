@@ -85,7 +85,7 @@ def distance():
     GPIO.output(GPIO_TRIGGER, True)
  
     # set Trigger after 0.01ms to LOW
-    time.sleep(0.00001)
+    time.sleep(0.00005)
     GPIO.output(GPIO_TRIGGER, False)
  
     StartTime = time.time()

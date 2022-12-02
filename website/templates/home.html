@@ -1,38 +1,80 @@
 {% extends "base.html" %} {% block title %}Home{% endblock %} {% block head %}
 {% endblock %} {% block content %}
 
-<span class="categoryText">Choose Drink</span>
-<span class="badge bg-success badgeText">Required</span>
-<!-- ORDER FORM -->
-<form action="/makeOrder" method="post">
-  <!-- Radio Select Drink Option -->
-  <div class="text-center verticalButtonLayout">
-    {% for i in range(1,7) %}
-    <label class="btn btn-outline-dark optionButton">
-      <input type="radio" name="drink" value="{{i}}" />
-      <div class="verticalButtonLayout">
-        <span class="optionLabel"
-          >{{drinkSetting["drink{}".format(i)]["name"]}}</span
-        >
-        <div class="priceText">
-          ${{drinkSetting["drink{}".format(i)]["price"]}}
-        </div>
-      </div>
-    </label>
-    {% endfor %}
-  </div>
-
-  <!-- SUBMIT BUTTON -->
-  <div class="text-center">
-    <button type="submit" class="btn btn-success submitButton">
-      <span class="optionLabel">Make Order</span>
+<main class="row">
+  <section class="col-md-2">
+    <button type="submit" id="voiceButton" class="btn btn-secondary my-3">
+      <span class="material-icons icon" id="voiceLogo"> voice_over_off </span>
+      <span class="sideLabel" id="voiceText"> Voice: OFF</span>
     </button>
-  </div>
-</form>
+    <!-- <span class="material-icons">record_voice_over</span> -->
+
+    <form action="/logout" method="post">
+      <button type="submit" class="btn btn-warning">
+        <span class="sideLabel"
+          ><span class="material-icons icon"> logout </span> Logout</span
+        >
+      </button>
+    </form>
+  </section>
+  <section class="col-md-8 content">
+    <!-- ORDER FORM -->
+    <form action="/makeOrder" method="post">
+      <span class="categoryText">Choose Drink</span>
+      <span class="badge bg-success badgeText">Required</span>
+      <!-- Radio Select Drink Option -->
+      <div class="text-center verticalButtonLayout">
+        {% for i in range(1,7) %}
+        <label class="btn btn-outline-dark optionButton">
+          {% if i == 1%}
+          <input type="radio" name="drink" value="{{i}}" required />
+          {%else%}
+          <input type="radio" name="drink" value="{{i}}" />
+          {%endif%}
+          <div class="verticalButtonLayout">
+            <span class="optionLabel"
+              >{{drinkSetting["drink{}".format(i)]["name"]}}</span
+            >
+            <div class="priceText">
+              ${{drinkSetting["drink{}".format(i)]["price"]}}
+            </div>
+          </div>
+        </label>
+        {% endfor %}
+        <span class="categoryText">Add {{toppingName}}</span>
+        <span class="badge bg-success badgeText">Required</span>
+        <label class="btn btn-outline-dark optionButton">
+          <input type="radio" name="addTopping" value="true" required />
+          <div class="verticalButtonLayout">
+            <span class="optionLabel">Yes</span>
+          </div>
+        </label>
+        <label class="btn btn-outline-dark optionButton">
+          <input type="radio" name="addTopping" value="false" />
+          <div class="verticalButtonLayout">
+            <span class="optionLabel">No</span>
+          </div>
+        </label>
+      </div>
+
+      <!-- SUBMIT BUTTON -->
+      <div class="text-center">
+        <button type="submit" class="btn btn-success submitButton">
+          <span class="optionLabel">Make Order</span>
+        </button>
+      </div>
+    </form>
+  </section>
+  <section class="col-md-2"></section>
+</main>
 
 <script
   type="text/javascript"
   src="{{ url_for('static', filename='js/detectVoice.js') }}"
+></script>
+<script
+  type="text/javascript"
+  src="{{ url_for('static', filename='js/voiceOverButton.js') }}"
 ></script>
 
 {% endblock %}

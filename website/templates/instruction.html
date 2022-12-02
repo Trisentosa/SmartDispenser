@@ -3,4 +3,11 @@ head %} {% endblock %} {% block content %}
 <h1>Instruction Page</h1>
 <p>Instruction: user's guide after ordering drink</p>
 
+<h2>Your order is being processed right now ...</h2>
+
+<script
+  type="text/javascript"
+  src="{{ url_for('static', filename='js/waitOrderProcess.js') }}"
+></script>
+
 {% endblock %}
