@@ -267,7 +267,7 @@ def push(pumpNumber):
 
 ### PAYMENT REST API ###
 
-def newOrder(drinkNumber, addTopping):
+def newOrder(drinkNumber, addTopping="false"):
     drinkName = db.child("maintainer").child("drinkSetting").child(
         "drink{}".format(drinkNumber)).child("name").get().val()
     drinkPrice = db.child("maintainer").child("drinkSetting").child(
@@ -355,6 +355,7 @@ def cancelOrder():
         headers = {"Authorization": "Bearer {}".format(paypalToken)}
         cancelRequest = requests.delete(
             "https://api-m.sandbox.paypal.com/v1/checkout/orders/{}".format(orderID.val()), headers=headers)
+        db.child("status").child("state").set(0)
         return redirect(url_for("home"))
     else:
         flash("You are not logged in as machine!", category="error")
