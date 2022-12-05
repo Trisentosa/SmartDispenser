@@ -204,7 +204,7 @@ while True:
         #Drink order signal
         orderSignal = db.child("status").child("orderSignal").get().val()
         print("Order Signal")
-        print(orderSignal)
+        print(orderSignal)  
         
         #Only retrieve pumpID if user makes a order
         if(orderSignal == True):
