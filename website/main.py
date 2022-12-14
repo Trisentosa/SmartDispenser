@@ -16,11 +16,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 app = Flask(__name__)
 # encrypts cookies and session data related to website
-app.config['SECRET_KEY'] = "thisisteamkiwisecret"
+app.config['SECRET_KEY'] = "SECRET_KEY"
 
 # FIREBASE CONFIG AND INITIALIZATION
 config = {
-    "apiKey": "AIzaSyBY8DyNfV_B2NSlKHr4sZRvRT1fBMlOuwQ",
+    "apiKey": "FIREBASE_KEY",
     "authDomain": "smartdispenser-ac92a.firebaseapp.com",
     "databaseURL": "https://smartdispenser-ac92a-default-rtdb.firebaseio.com",
     "projectId": "smartdispenser-ac92a",
