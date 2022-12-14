@@ -18,7 +18,7 @@ import pyttsx3
 from gtts import gTTS
 from playsound import playsound
 
-time.sleep(45)
+#time.sleep(45)
 '''                   Voice Control Setup                       '''
 recognizer = sr.Recognizer()
 
@@ -38,58 +38,99 @@ def getWords():
 GPIO.setmode(GPIO.BCM)
 #os.system('modprobe w1-gpio')
 
+#Ultrasonic sensor
+#set GPIO Pins
+GPIO_TRIGGER = 23
+GPIO_ECHO = 24
+ 
+#set GPIO direction (IN / OUT)
+GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
+GPIO.setup(GPIO_ECHO, GPIO.IN)
+
+def distance():
+    # set Trigger to HIGH
+    GPIO.output(GPIO_TRIGGER, True)
+ 
+    # set Trigger after 0.01ms to LOW
+    time.sleep(0.00005)
+    GPIO.output(GPIO_TRIGGER, False)
+ 
+    StartTime = time.time()
+    StopTime = time.time()
+ 
+    # save StartTime
+    while GPIO.input(GPIO_ECHO) == 0:
+        StartTime = time.time()
+ 
+    # save time of arrival
+    while GPIO.input(GPIO_ECHO) == 1:
+        StopTime = time.time()
+ 
+    # time difference between start and arrival
+    TimeElapsed = StopTime - StartTime
+    # multiply with the sonic speed (34300 cm/s)
+    # and divide by 2, because there and back
+    distance = (TimeElapsed * 34300) / 2
+ 
+    return distance
+
 # Pumps
 pumps = {1:0, 2:5, 3:6, 4:13, 5:19, 6:26}
 
-GPIO.setup(0,GPIO.OUT)  
-GPIO.setup(5,GPIO.OUT)  
+GPIO.setup(0,GPIO.OUT)
+GPIO.setup(5,GPIO.OUT)
 GPIO.setup(6,GPIO.OUT)
 GPIO.setup(13,GPIO.OUT)
 GPIO.setup(19,GPIO.OUT)
 GPIO.setup(26,GPIO.OUT)
 
+GPIO.setup(0,GPIO.HIGH)
+GPIO.setup(5,GPIO.HIGH)
+GPIO.setup(6,GPIO.HIGH)
+GPIO.setup(13,GPIO.HIGH)
+GPIO.setup(19,GPIO.HIGH)
+GPIO.setup(26,GPIO.HIGH)
+
+
 # # Stepper motor (Boba (mill) dispenser)
-in1 = 17
-in2 = 18
-in3 = 27
-in4 = 22
+#in1 = 17
+#in2 = 18
+#in3 = 27
+#in4 = 22
  
 # lower -> faster turn speed. lowest is around 0.002
-step_sleep = 0.003
+#step_sleep = 0.003
  
-step_count = 4096 # 5.625*(1/64) per step, 4096 steps is 360°, 4096 = 1 rotation
+#step_count = 4096 # 5.625*(1/64) per step, 4096 steps is 360°, 4096 = 1 rotation
  
 # defining stepper motor sequence
-step_sequence = [[1,0,0,1],
-                 [1,0,0,0],
-                 [1,1,0,0],
-                 [0,1,0,0],
-                 [0,1,1,0],
-                 [0,0,1,0],
-                 [0,0,1,1],
-                 [0,0,0,1]]
+#step_sequence = [[1,0,0,1],
+#                 [1,0,0,0],
+#                 [1,1,0,0],
+#                 [0,1,0,0],
+#                 [0,1,1,0],
+#                 [0,0,1,0],
+#                 [0,0,1,1],
+#                 [0,0,0,1]]
  
 # motor setting up
-GPIO.setmode( GPIO.BCM )
-GPIO.setup( in1, GPIO.OUT )
-GPIO.setup( in2, GPIO.OUT )
-GPIO.setup( in3, GPIO.OUT )
-GPIO.setup( in4, GPIO.OUT )
+#GPIO.setmode( GPIO.BCM )
+#GPIO.setup( in1, GPIO.OUT )
+#GPIO.setup( in2, GPIO.OUT )
+#GPIO.setup( in3, GPIO.OUT )
+#GPIO.setup( in4, GPIO.OUT )
  
 # initializing
-GPIO.output( in1, GPIO.LOW )
-GPIO.output( in2, GPIO.LOW )
-GPIO.output( in3, GPIO.LOW )
-GPIO.output( in4, GPIO.LOW )
+#GPIO.output( in1, GPIO.LOW )
+#GPIO.output( in2, GPIO.LOW )
+#GPIO.output( in3, GPIO.LOW )
+#GPIO.output( in4, GPIO.LOW )
 
-motor_pins = [in1,in2,in3,in4]
-motor_step_counter = 0 
+#motor_pins = [in1,in2,in3,in4]
+#motor_step_counter = 0 
  
 def cleanup():
-    GPIO.output( in1, GPIO.LOW )
-    GPIO.output( in2, GPIO.LOW )
-    GPIO.output( in3, GPIO.LOW )
-    GPIO.output( in4, GPIO.LOW )
+    GPIO.setmode(GPIO.BCM)
     GPIO.cleanup()
 
 # # IR/Proximity sensor
@@ -126,19 +167,20 @@ def get_pump_status(x):
     return status
 
 def togglePump(x):
-    GPIO.output(pumps[x],GPIO.LOW)
+    GPIO.setup(pumps[x],GPIO.OUT)
+    GPIO.output(pumps[x],GPIO.LOW)#
     time.sleep(timeToFillCup)
     GPIO.output(pumps[x],GPIO.HIGH)
     db.child("status").child("orderSignal").set(False)
 
-def rotateMotor():
-    i = 0
-    motor_step_counter = 0
-    for i in range(step_count):
-        for pin in range(0, len(motor_pins)):
-            GPIO.output( motor_pins[pin], step_sequence[motor_step_counter][pin] )
-        motor_step_counter = (motor_step_counter - 1) % 8 # clockwise, cc +1 instead
-        time.sleep( step_sleep )
+#def rotateMotor():
+#    i = 0
+#    motor_step_counter = 0
+#    for i in range(step_count):
+#        for pin in range(0, len(motor_pins)):
+#            GPIO.output( motor_pins[pin], step_sequence[motor_step_counter][pin] )
+#        motor_step_counter = (motor_step_counter - 1) % 8 # clockwise, cc +1 instead
+#        time.sleep( step_sleep )
 
 #voice assistant
 db.child("voiceAssistant").child("voiceState").set(0) #init voice state to 0
@@ -155,9 +197,10 @@ def voiceAssistant():
 
 '''                   MAIN LOOP                       '''
 print("MACHINE IS STARTING")
-db.child("status").child("test").set(60)
+db.child("status").child("orderSignal").set(False)
+db.child("status").child("state").set(0)
+db.child("status").child("irSignal").set(False)
 while True:
-    db.child("status").child("test").set(30)
     pumpID = 0
     motorID = 0
     state = db.child("status").child("state").get().val()
@@ -189,8 +232,8 @@ while True:
                         print("found :",drinkName)
                         # set voice signal in firebase and drinkNumber
                         # Once read by the website, from website set the signal false
-                        db.child("voiceSignal").child("isSet").set(True)   
-                        db.child("voiceSignal").child("drinkNumber").set(drinkNumber)          
+                        db.child("voiceSignal").child("isSet").set(True) 
+                        db.child("voiceSignal").child("drinkNumber").set(drinkNumber)
 
         #reinitialize if error
         except sr.UnknownValueError:
@@ -204,25 +247,38 @@ while True:
         #Drink order signal
         orderSignal = db.child("status").child("orderSignal").get().val()
         print("Order Signal")
+<<<<<<< HEAD
         print(orderSignal)  
         
+=======
+        print(orderSignal)
+
+>>>>>>> 5682d3c9f69750c69f3d0eee04487483003b87c6
         #Only retrieve pumpID if user makes a order
-        if(orderSignal == True):
-            print("Making the order ...")
-            #voice assistant set voiceState 3
-            db.child("voiceAssistant").child("voiceState").set(3)
-            db.child("voiceAssistant").child("sayIt").set(True)
-            #Order making
-            addTopping = db.child("currentOrder").child("addTopping").get().val()
-            if(addTopping):
-                rotateMotor()        
-            pumpID = int(db.child("currentOrder").child("pumpId").get().val())
-            togglePump(pumpID)
-            db.child("status").child("state").set(0)
-            #voice assistant set voiceState 3
-            db.child("voiceAssistant").child("voiceState").set(4)
-            db.child("voiceAssistant").child("sayIt").set(True)
+        if orderSignal == True:
+            dist = distance()
+            irSignal = db.child("status").child("irSignal").get().val()
+            print("irSignal: ", irSignal)
+            if dist < 7.5:
+                db.child("status").child("irSignal").set(True)
+            if irSignal == True:
+              print("Making the order ...")
+              #voice assistant set voiceState 3
+              db.child("voiceAssistant").child("voiceState").set(3)
+              db.child("voiceAssistant").child("sayIt").set(True)
+              #Order making
+              #addTopping = db.child("currentOrder").child("addTopping").get().val()
+              #if(addTopping):
+              #    rotateMotor()        
+              pumpID = int(db.child("currentOrder").child("pumpId").get().val())
+              togglePump(pumpID)
+              db.child("status").child("state").set(0)
+              db.child("status").child("irSignal").set(False)
+              #voice assistant set voiceState 3
+              db.child("voiceAssistant").child("voiceState").set(4)
+              db.child("voiceAssistant").child("sayIt").set(True)
+	      #reset
+              #db.child("voiceAssistant").child("voiceState").set(0)
 
         time.sleep(0.5)
-
 cleanup()

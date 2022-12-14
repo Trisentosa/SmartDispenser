@@ -298,8 +298,10 @@ def newOrder(drinkNumber, addTopping="false"):
         db.child("currentOrder").child("addTopping").set(False)
     else:
         db.child("currentOrder").child("addTopping").set(True)
+    #voice assistant set voiceState 1
     
-    
+    db.child("voiceAssistant").child("voiceState").set(1)
+    db.child("voiceAssistant").child("sayIt").set(True)
 
 def getCurrentOrder():
     drinkName = db.child("currentOrder").child("drink").get().val()
@@ -330,12 +332,10 @@ def makeOrder():
         if len(formData) > 0:
             #create order
             drinkNumber = formData["drink"]
-            addTopping = formData["addTopping"]
-            newOrder(drinkNumber, addTopping)
+            #addTopping = formData["addTopping"]
+            newOrder(drinkNumber)
             db.child("status").child("state").set(1)
-            #voice assistant set voiceState 1
-            db.child("voiceAssistant").child("voiceState").set(1)
-            db.child("voiceAssistant").child("sayIt").set(True)
+            
             return redirect(url_for("payOrder"))
         else:
             return redirect(url_for("home"))

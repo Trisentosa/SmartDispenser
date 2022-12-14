@@ -111,8 +111,10 @@ if __name__ == '__main__':
     try:
         while True:
             dist = distance()
+            if dist < 7:
+               print("cup present")
             print ("Measured Distance = %.1f cm" % dist)
-            time.sleep(1)
+            time.sleep(0.5)
  
         # Reset by pressing CTRL + C
     except KeyboardInterrupt:
